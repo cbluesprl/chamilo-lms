@@ -15,6 +15,22 @@ switch ($action) {
         $size = DocumentManager::getTotalFolderSize($path, $isAllowedToEdit);
         echo format_file_size($size);
         break;
+    case 'get_dirs_size':
+        api_protect_course_script(true);
+        $requests = isset($_GET['requests']) ? $_GET['requests'] : '';
+        $isAllowedToEdit = api_is_allowed_to_edit();
+        $response = [];
+        $requests = explode(',', $requests);
+        foreach ($requests as $request) {
+            $fileSize = DocumentManager::getTotalFolderSize($request, $isAllowedToEdit);
+            $data = [
+                'id' => $request,
+                'size' => format_file_size($fileSize),
+            ];
+            array_push($response, $data);
+        }
+        echo json_encode($response);
+        break;
     case 'get_document_quota':
         // Getting the course quota
         $courseQuota = DocumentManager::get_course_quota();
@@ -60,7 +76,7 @@ switch ($action) {
             exit;
         }
 
-        $directoryParentId = isset($_POST['directory_parent_id']) ? $_POST['directory_parent_id'] : 0;
+        $directoryParentId = isset($_POST['directory_parent_id']) ? (int) $_POST['directory_parent_id'] : 0;
         $currentDirectory = '';
         if (empty($directoryParentId)) {
             $currentDirectory = isset($_REQUEST['curdirpath']) ? $_REQUEST['curdirpath'] : '';
@@ -70,7 +86,9 @@ switch ($action) {
                 $currentDirectory = $documentData['path'];
             }
         }
-
+        if (empty($currentDirectory)) {
+            $currentDirectory = DIRECTORY_SEPARATOR;
+        }
         $ifExists = isset($_POST['if_exists']) ? $_POST['if_exists'] : '';
         $unzip = isset($_POST['unzip']) ? 1 : 0;
 
@@ -138,6 +156,67 @@ switch ($action) {
         }
         exit;
         break;
+    case 'ck_uploadimage':
+        api_protect_course_script(true);
+
+        // it comes from uploaimage drag and drop ckeditor
+        $isCkUploadImage = ($_COOKIE['ckCsrfToken'] == $_POST['ckCsrfToken']);
+
+        if (!$isCkUploadImage) {
+            exit;
+        }
+
+        $data = [];
+        $fileUpload = $_FILES['upload'];
+        $currentDirectory = Security::remove_XSS($_REQUEST['curdirpath']);
+        $isAllowedToEdit = api_is_allowed_to_edit(null, true);
+        if ($isAllowedToEdit) {
+            $globalFile = ['files' => $fileUpload];
+            $result = DocumentManager::upload_document(
+                $globalFile,
+                $currentDirectory,
+                '',
+                '',
+                0,
+                'rename',
+                false,
+                false,
+                'files'
+            );
+            if ($result) {
+                $relativeUrl = str_replace(api_get_path(WEB_PATH), '/', $result['direct_url']);
+                $data = [
+                    'uploaded' => 1,
+                    'fileName' => $fileUpload['name'],
+                    'url' => $relativeUrl,
+                ];
+            }
+        } else {
+            $userId = api_get_user_id();
+            $syspath = UserManager::getUserPathById($userId, 'system').'my_files'.$currentDirectory;
+            if (!is_dir($syspath)) {
+                mkdir($syspath, api_get_permissions_for_new_directories(), true);
+            }
+            $webpath = UserManager::getUserPathById($userId, 'web').'my_files'.$currentDirectory;
+            $fileUploadName = $fileUpload['name'];
+            if (file_exists($syspath.$fileUploadName)) {
+                $extension = pathinfo($fileUploadName, PATHINFO_EXTENSION);
+                $fileName = pathinfo($fileUploadName, PATHINFO_FILENAME);
+                $suffix = '_'.uniqid();
+                $fileUploadName = $fileName.$suffix.'.'.$extension;
+            }
+            if (move_uploaded_file($fileUpload['tmp_name'], $syspath.$fileUploadName)) {
+                $url = $webpath.$fileUploadName;
+                $relativeUrl = str_replace(api_get_path(WEB_PATH), '/', $url);
+                $data = [
+                    'uploaded' => 1,
+                    'fileName' => $fileUploadName,
+                    'url' => $relativeUrl,
+                ];
+            }
+        }
+        echo json_encode($data);
+        exit;
     case 'document_preview':
         $courseInfo = api_get_course_info_by_id($_REQUEST['course_id']);
         if (!empty($courseInfo) && is_array($courseInfo)) {

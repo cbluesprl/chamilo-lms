@@ -1,3 +1,15 @@
+Version 2.10 - 2021-10
+----------------------
+* Add support for multiple recording formats
+
+Version 2.9 - 2021-08
+---------------------
+* Remove interface option (HTML5/Flash)
+
+Version 2.8 - 2019-07
+---------------------
+* Add rooms + internal meeting id
+
 Version 2.7 - 2018-07
 ---------------------
 * Add interface option (HTML5 or Flash)

@@ -45,7 +45,7 @@ class OralExpression extends Question
         global $text;
         // setting the save button here and not in the question class.php
         $form->addButtonSave($text, 'submitQuestion');
-        if (!empty($this->id)) {
+        if (!empty($this->iid)) {
             $form->setDefaults(['weighting' => float_format($this->weighting, 1)]);
         } else {
             if ($this->isContent == 1) {
@@ -121,7 +121,7 @@ class OralExpression extends Question
         $recordAudioView->assign('directory', $directory);
         $recordAudioView->assign('user_id', $this->userId);
         $recordAudioView->assign('file_name', $this->fileName);
-        $recordAudioView->assign('question_id', $this->id);
+        $recordAudioView->assign('question_id', $this->iid);
 
         $template = $recordAudioView->get_template('exercise/oral_expression.tpl');
 
@@ -142,13 +142,13 @@ class OralExpression extends Question
         if ($loadFromDatabase) {
             $em = Database::getManager();
             //Load the real filename just if exists
-            if (isset($this->exeId, $this->userId, $this->id, $this->sessionId, $this->course['real_id'])) {
+            if (isset($this->exeId, $this->userId, $this->iid, $this->sessionId, $this->course['real_id'])) {
                 $result = $em
                     ->getRepository('ChamiloCoreBundle:TrackEAttempt')
                     ->findOneBy([
                         'exeId' => $this->exeId,
                         'userId' => $this->userId,
-                        'questionId' => $this->id,
+                        'questionId' => $this->iid,
                         'sessionId' => $this->sessionId,
                         'cId' => $this->course['real_id'],
                     ]);
@@ -257,20 +257,20 @@ class OralExpression extends Question
             mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId);
         }
 
-        if (!empty($this->id) && !is_dir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id)) {
-            mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id);
+        if (!empty($this->iid) && !is_dir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->iid)) {
+            mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->iid);
         }
 
         if (!empty($this->userId) &&
-            !is_dir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id.'/'.$this->userId)
+            !is_dir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->iid.'/'.$this->userId)
         ) {
-            mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id.'/'.$this->userId);
+            mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->iid.'/'.$this->userId);
         }
 
         $params = [
             $this->sessionId,
             $this->exerciseId,
-            $this->id,
+            $this->iid,
             $this->userId,
         ];
 
@@ -293,7 +293,7 @@ class OralExpression extends Question
                 $this->sessionId,
                 $this->userId,
                 $this->exerciseId,
-                $this->id,
+                $this->iid,
                 $this->exeId,
             ]
         );
@@ -309,7 +309,7 @@ class OralExpression extends Question
         $params = [
             $this->sessionId,
             $this->exerciseId,
-            $this->id,
+            $this->iid,
             $this->userId,
         ];
 

@@ -159,7 +159,7 @@ function handlePluginUpload()
     $form = new FormValidator(
         'plugin_upload',
         'post',
-        'settings.php?category=Plugins#tabs-4'
+        api_get_path(WEB_CODE_PATH).'admin/settings.php?category=Plugins#tabs-4'
     );
     $form->addElement(
         'file',
@@ -181,30 +181,29 @@ function handlePluginUpload()
         'required'
     );
     $form->addButtonUpload(get_lang('Upload'), 'plugin_upload');
+    $form->protect();
 
     // Plugin upload.
-    if (isset($_POST['plugin_upload'])) {
-        if ($form->validate()) {
-            $fileElement = $form->getElement('new_plugin');
-            $file = $fileElement->getValue();
-            $result = uploadPlugin($file);
+    if ($form->validate()) {
+        $fileElement = $form->getElement('new_plugin');
+        $file = $fileElement->getValue();
+        $result = uploadPlugin($file);
 
-            // Add event to the system log.
-            $user_id = api_get_user_id();
-            $category = $_GET['category'];
-            Event::addEvent(
-                LOG_PLUGIN_CHANGE,
-                LOG_PLUGIN_UPLOAD,
-                $file['name'],
-                api_get_utc_datetime(),
-                $user_id
-            );
+        // Add event to the system log.
+        $user_id = api_get_user_id();
+        $category = $_GET['category'];
+        Event::addEvent(
+            LOG_PLUGIN_CHANGE,
+            LOG_PLUGIN_UPLOAD,
+            $file['name'],
+            api_get_utc_datetime(),
+            $user_id
+        );
 
-            if ($result) {
-                Display::addFlash(Display::return_message(get_lang('PluginUploaded'), 'success', false));
-                header('Location: ?category=Plugins#');
-                exit;
-            }
+        if ($result) {
+            Display::addFlash(Display::return_message(get_lang('PluginUploaded'), 'success', false));
+            header('Location: ?category=Plugins#');
+            exit;
         }
     }
     echo $form->returnForm();
@@ -222,7 +221,7 @@ function handlePlugins()
 {
     Session::erase('plugin_data');
     $plugin_obj = new AppPlugin();
-    $token = Security::get_token();
+    $token = Security::get_existing_token();
     if (isset($_POST['submit_plugins'])) {
         storePlugins();
         // Add event to the system log.
@@ -398,8 +397,9 @@ function handleStylesheets()
     $form = new FormValidator(
         'stylesheet_upload',
         'post',
-        'settings.php?category=Stylesheets#tabs-3'
+        api_get_path(WEB_CODE_PATH).'admin/settings.php?category=Stylesheets#tabs-3'
     );
+    $form->protect();
     $form->addElement(
         'text',
         'name_stylesheet',
@@ -1227,8 +1227,14 @@ function displayTemplates()
     );
     $table->set_header(0, get_lang('Image'), true, ['style' => 'width: 101px;']);
     $table->set_header(1, get_lang('Title'));
-    $table->set_header(2, get_lang('Actions'), false, ['style' => 'width:50px;']);
-    $table->set_column_filter(2, 'actionsFilter');
+    if (true === api_get_configuration_value('template_activate_language_filter')) {
+        $table->set_header(2, get_lang('Language'));
+        $table->set_header(3, get_lang('Actions'), false, ['style' => 'width:50px;']);
+        $table->set_column_filter(3, 'actionsFilter');
+    } else {
+        $table->set_header(2, get_lang('Actions'), false, ['style' => 'width:50px;']);
+        $table->set_column_filter(2, 'actionsFilter');
+    }
     $table->set_column_filter(0, 'searchImageFilter');
     $table->display();
 }
@@ -1285,7 +1291,11 @@ function getTemplateData($from, $number_of_items, $column, $direction)
     $direction = !in_array(strtolower(trim($direction)), ['asc', 'desc']) ? 'asc' : $direction;
 
     // The sql statement.
-    $sql = "SELECT image as col0, title as col1, id as col2 FROM $table_system_template";
+    if (true === api_get_configuration_value('template_activate_language_filter')) {
+        $sql = "SELECT image as col0, title as col1, language as col2, id as col3 FROM $table_system_template";
+    } else {
+        $sql = "SELECT image as col0, title as col1, id as col2 FROM $table_system_template";
+    }
     $sql .= " ORDER BY col$column $direction ";
     $sql .= " LIMIT $from,$number_of_items";
     $result = Database::query($sql);
@@ -1353,6 +1363,8 @@ function searchImageFilter($image)
  */
 function addEditTemplate()
 {
+    $language_interface = api_get_interface_language();
+
     $em = Database::getManager();
     // Initialize the object.
     $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -1386,6 +1398,11 @@ function addEditTemplate()
         true,
         ['ToolbarSet' => 'Documents', 'Width' => '100%', 'Height' => '400']
     );
+    if (true === api_get_configuration_value('template_activate_language_filter')) {
+        $form->addSelectLanguage('language', get_lang('Language'), null);
+    } else {
+        $form->addHidden('language', $language_interface);
+    }
 
     // Setting the form elements: the form to upload an image to be used with the template.
     if (empty($template->getImage())) {
@@ -1402,6 +1419,7 @@ function addEditTemplate()
         // Forcing get_lang().
         $defaults['title'] = $template->getTitle();
         $defaults['comment'] = $template->getComment();
+        $defaults['language'] = $template->getLanguage();
 
         // Adding an extra field: a hidden field with the id of the template we are editing.
         $form->addElement('hidden', 'template_id');
@@ -1446,8 +1464,7 @@ function addEditTemplate()
     // if the form validates (complies to all rules) we save the information,
     // else we display the form again (with error message if needed)
     if ($form->validate()) {
-        $check = Security::check_token('post');
-
+        $check = Security::check_token('post', null, 'frm');
         if ($check) {
             // Exporting the values.
             $values = $form->exportValues();
@@ -1498,6 +1515,7 @@ function addEditTemplate()
                     ->setTitle($values['title'])
                     ->setComment(Security::remove_XSS($values['comment']))
                     ->setContent(Security::remove_XSS($templateContent, COURSEMANAGERLOWSECURITY))
+                    ->setLanguage($values['language'])
                     ->setImage($new_file_name);
                 $em->persist($template);
                 $em->flush();
@@ -1515,6 +1533,7 @@ function addEditTemplate()
                 $template
                     ->setTitle($values['title'])
                     ->setComment(Security::remove_XSS($values['comment']))
+                    ->setLanguage($values['language'])
                     ->setContent(Security::remove_XSS($templateContent, COURSEMANAGERLOWSECURITY));
 
                 if ($isDelete) {
@@ -1536,12 +1555,13 @@ function addEditTemplate()
                 echo Display::return_message(get_lang('TemplateEdited'), 'confirm');
             }
         }
-        Security::clear_token();
-        displayTemplates();
+        Security::clear_token('frm');
+        header('Location: '.api_get_path(WEB_CODE_PATH).'admin/settings.php?category=Templates');
+        exit;
     } else {
-        $token = Security::get_token();
-        $form->addElement('hidden', 'sec_token');
-        $form->setConstants(['sec_token' => $token]);
+        $token = Security::get_token('frm');
+        $form->addElement('hidden', 'frm_sec_token');
+        $form->setConstants(['frm_sec_token' => $token]);
         // Display the form.
         $form->display();
     }
@@ -1641,8 +1661,9 @@ function generateSettingsForm($settings, $settings_by_access_list)
     $form = new FormValidator(
         'settings',
         'post',
-        'settings.php?category='.Security::remove_XSS($_GET['category'])
+        api_get_path(WEB_CODE_PATH).'admin/settings.php?category='.Security::remove_XSS($_GET['category'])
     );
+    $form->protect();
 
     $form->addElement(
         'hidden',
@@ -1966,6 +1987,11 @@ function generateSettingsForm($settings, $settings_by_access_list)
         }
 
         switch ($row['variable']) {
+            case 'upload_extensions_replace_by':
+                $default_values[$row['variable']] = api_replace_dangerous_char(
+                    str_replace('.', '', $default_values[$row['variable']])
+                );
+                break;
             case 'pdf_export_watermark_enable':
                 $url = PDF::get_watermark(null);
 

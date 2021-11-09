@@ -140,13 +140,15 @@ class SessionManager
      * @param mixed  $coachId                      If int, this is the session coach id,
      *                                             if string, the coach ID will be looked for from the user table
      * @param int    $sessionCategoryId            ID of the session category in which this session is registered
-     * @param int    $visibility                   Visibility after end date (0 = read-only, 1 = invisible, 2 = accessible)
+     * @param int    $visibility                   Visibility after end date (0 = read-only, 1 = invisible, 2 =
+     *                                             accessible)
      * @param bool   $fixSessionNameIfExists
      * @param string $duration
      * @param string $description                  Optional. The session description
      * @param int    $showDescription              Optional. Whether show the session description
      * @param array  $extraFields
-     * @param int    $sessionAdminId               Optional. If this sessions was created by a session admin, assign it to him
+     * @param int    $sessionAdminId               Optional. If this sessions was created by a session admin, assign it
+     *                                             to him
      * @param bool   $sendSubscriptionNotification Optional.
      *                                             Whether send a mail notification to users being subscribed
      * @param int    $accessUrlId                  Optional.
@@ -1531,8 +1533,9 @@ class SessionManager
      *
      * @param string $session_name
      *                             <code>
-     *                             $wanted_code = 'curse' if there are in the DB codes like curse1 curse2 the function will return: course3
-     *                             if the course code doest not exist in the DB the same course code will be returned
+     *                             $wanted_code = 'curse' if there are in the DB codes like curse1 curse2 the function
+     *                             will return: course3 if the course code doest not exist in the DB the same course
+     *                             code will be returned
      *                             </code>
      *
      * @return string wanted unused code
@@ -2558,6 +2561,8 @@ class SessionManager
             }
         }
 
+        $em = Database::getManager();
+
         // Pass through the courses list we want to add to the session
         foreach ($courseList as $courseId) {
             $courseInfo = api_get_course_info_by_id($courseId);
@@ -2709,6 +2714,21 @@ class SessionManager
                         VALUES ($sessionId, $courseId, 0, 0)";
                 Database::query($sql);
 
+                if (api_get_configuration_value('allow_skill_rel_items')) {
+                    $skillRelCourseRepo = $em->getRepository('ChamiloSkillBundle:SkillRelCourse');
+                    $items = $skillRelCourseRepo->findBy(['course' => $courseId, 'session' => null]);
+                    /** @var \Chamilo\SkillBundle\Entity\SkillRelCourse $item */
+                    foreach ($items as $item) {
+                        $exists = $skillRelCourseRepo->findOneBy(['course' => $courseId, 'session' => $session]);
+                        if (null === $exists) {
+                            $skillRelCourse = clone $item;
+                            $skillRelCourse->setSession($session);
+                            $em->persist($skillRelCourse);
+                        }
+                    }
+                    $em->flush();
+                }
+
                 Event::addEvent(
                     LOG_SESSION_ADD_COURSE,
                     LOG_COURSE_ID,
@@ -2726,11 +2746,10 @@ class SessionManager
 
                 // Subscribe all the users from the session to this course inside the session
                 self::insertUsersInCourse(
-                    array_column($user_list, 'id'),
+                    array_column($user_list, 'user_id'),
                     $courseId,
                     $sessionId,
-                    ['visibility' => $sessionVisibility],
-                    false
+                    ['visibility' => $sessionVisibility]
                 );
             }
 
@@ -4807,6 +4826,8 @@ class SessionManager
      * @param int $courseId
      *
      * @return array
+     *
+     * @todo Add param to get only active sessions (not expires ones)
      */
     public static function get_session_by_course($courseId)
     {
@@ -4870,11 +4891,15 @@ class SessionManager
     /**
      * @param string $file
      * @param bool   $updateSession                                   true: if the session exists it will be updated.
-     *                                                                false: if session exists a new session will be created adding a counter session1, session2, etc
+     *                                                                false: if session exists a new session will be
+     *                                                                created adding a counter session1, session2, etc
      * @param int    $defaultUserId
      * @param Logger $logger
-     * @param array  $extraFields                                     convert a file row to an extra field. Example in CSV file there's a SessionID
-     *                                                                then it will converted to extra_external_session_id if you set: array('SessionId' => 'extra_external_session_id')
+     * @param array  $extraFields                                     convert a file row to an extra field. Example in
+     *                                                                CSV file there's a SessionID then it will
+     *                                                                converted to extra_external_session_id if you
+     *                                                                set: array('SessionId' =>
+     *                                                                'extra_external_session_id')
      * @param string $extraFieldId
      * @param int    $daysCoachAccessBeforeBeginning
      * @param int    $daysCoachAccessAfterBeginning
@@ -5091,7 +5116,7 @@ class SessionManager
                         if ($i > 1) {
                             $suffix = ' - '.$i;
                         }
-                        $sql = 'SELECT 1 FROM '.$tbl_session.'
+                        $sql = 'SELECT id FROM '.$tbl_session.'
                                 WHERE name="'.Database::escape_string($session_name).$suffix.'"';
                         $rs = Database::query($sql);
                         if (Database::result($rs, 0, 0)) {
@@ -5357,18 +5382,19 @@ class SessionManager
                     $extraFieldValueCareer = new ExtraFieldValue('career');
                     $careerList = isset($enreg['extra_careerid']) && !empty($enreg['extra_careerid']) ? $enreg['extra_careerid'] : [];
                     $careerList = str_replace(['[', ']'], '', $careerList);
-                    $careerList = explode(',', $careerList);
                     $finalCareerIdList = [];
-                    foreach ($careerList as $careerId) {
-                        $realCareerIdList = $extraFieldValueCareer->get_item_id_from_field_variable_and_field_value(
-                            'external_career_id',
-                            $careerId
-                        );
-                        if (isset($realCareerIdList['item_id'])) {
-                            $finalCareerIdList[] = $realCareerIdList['item_id'];
+                    if (!empty($careerList)) {
+                        $careerList = explode(',', $careerList);
+                        foreach ($careerList as $careerId) {
+                            $realCareerIdList = $extraFieldValueCareer->get_item_id_from_field_variable_and_field_value(
+                                'external_career_id',
+                                $careerId
+                            );
+                            if (isset($realCareerIdList['item_id'])) {
+                                $finalCareerIdList[] = $realCareerIdList['item_id'];
+                            }
                         }
                     }
-
                     foreach ($users as $user) {
                         $user_id = UserManager::get_user_id_from_username($user);
                         if ($user_id !== false) {

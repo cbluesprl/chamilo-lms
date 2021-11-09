@@ -275,11 +275,9 @@ class HTML_QuickForm extends HTML_Common
 
     public function protect()
     {
-        $token = $this->getSubmitValue('protect_token');
+        $token = Security::get_existing_token();
         if (null === $token) {
             $token = Security::get_token();
-        } else {
-            $token = Security::get_existing_token();
         }
         $this->addHidden('protect_token', $token);
         $this->setToken($token);
@@ -1430,6 +1428,11 @@ class HTML_QuickForm extends HTML_Common
             $check = Security::check_token('form', $this);
             Security::clear_token();
             if (false === $check) {
+                // Redirect to the same URL + show token not validated message.
+                $url = $this->getAttribute('action');
+                Display::addFlash(Display::return_message(get_lang('NotValidated'), 'warning'));
+                api_location($url);
+
                 return false;
             }
         }

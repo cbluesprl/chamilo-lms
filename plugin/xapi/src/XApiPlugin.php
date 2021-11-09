@@ -2,7 +2,10 @@
 
 /* For licensing terms, see /license.txt */
 
+use Chamilo\PluginBundle\Entity\XApi\ActivityProfile;
+use Chamilo\PluginBundle\Entity\XApi\ActivityState;
 use Chamilo\PluginBundle\Entity\XApi\Cmi5Item;
+use Chamilo\PluginBundle\Entity\XApi\InternalLog;
 use Chamilo\PluginBundle\Entity\XApi\LrsAuth;
 use Chamilo\PluginBundle\Entity\XApi\SharedStatement;
 use Chamilo\PluginBundle\Entity\XApi\ToolLaunch;
@@ -42,7 +45,7 @@ class XApiPlugin extends Plugin implements HookPluginInterface
      */
     protected function __construct()
     {
-        $version = '0.1 (beta)';
+        $version = '0.2 (beta)';
         $author = [
             'Angel Fernando Quiroz Campos <angel.quiroz@beeznest.com>',
         ];
@@ -90,6 +93,9 @@ class XApiPlugin extends Plugin implements HookPluginInterface
                 'xapi_tool_launch',
                 'xapi_lrs_auth',
                 'xapi_cmi5_item',
+                'xapi_activity_state',
+                'xapi_activity_profile',
+                'xapi_internal_log',
 
                 'xapi_attachment',
                 'xapi_object',
@@ -107,7 +113,7 @@ class XApiPlugin extends Plugin implements HookPluginInterface
         }
 
         $this->installPluginDbTables();
-        $this->installUuid();
+        $this->installInitialConfig();
         $this->addCourseTools();
         $this->installHook();
     }
@@ -154,10 +160,13 @@ class XApiPlugin extends Plugin implements HookPluginInterface
         $schemaTool = new SchemaTool($em);
         $schemaTool->dropSchema(
             [
+                $em->getClassMetadata(ActivityProfile::class),
+                $em->getClassMetadata(ActivityState::class),
                 $em->getClassMetadata(SharedStatement::class),
                 $em->getClassMetadata(ToolLaunch::class),
                 $em->getClassMetadata(LrsAuth::class),
                 $em->getClassMetadata(Cmi5Item::class),
+                $em->getClassMetadata(InternalLog::class),
             ]
         );
 
@@ -495,6 +504,9 @@ class XApiPlugin extends Plugin implements HookPluginInterface
                 $em->getClassMetadata(ToolLaunch::class),
                 $em->getClassMetadata(LrsAuth::class),
                 $em->getClassMetadata(Cmi5Item::class),
+                $em->getClassMetadata(ActivityState::class),
+                $em->getClassMetadata(ActivityProfile::class),
+                $em->getClassMetadata(InternalLog::class),
             ]
         );
 
@@ -516,7 +528,7 @@ class XApiPlugin extends Plugin implements HookPluginInterface
     /**
      * @throws \Exception
      */
-    private function installUuid()
+    private function installInitialConfig()
     {
         $uuidNamespace = Uuid::uuid1();
 
@@ -526,6 +538,20 @@ class XApiPlugin extends Plugin implements HookPluginInterface
         api_add_setting(
             $uuidNamespace,
             $pluginName.'_'.self::SETTING_UUID_NAMESPACE,
+            $pluginName,
+            'setting',
+            'Plugins',
+            $pluginName,
+            '',
+            '',
+            '',
+            $urlId,
+            1
+        );
+
+        api_add_setting(
+            api_get_path(WEB_PATH).'plugin/xapi/lrs.php',
+            $pluginName.'_'.self::SETTING_LRS_URL,
             $pluginName,
             'setting',
             'Plugins',

@@ -122,11 +122,15 @@ class ExtraFieldValue extends Model
             if (false === $forceSave) {
                 // if the field is not visible to the user in the end, we need to apply special rules.
                 if (1 != $fieldDetails['visible_to_self']) {
-                    //only admins should be able to add those values
-                    if (!api_is_platform_admin(true, true)) {
-                        // although if not admin but sent through a CLI script, we should accept it as well
-                        if (PHP_SAPI != 'cli') {
-                            continue; //not a CLI script, so don't write the value to DB
+                    if (isset($params['origin']) && 'profile' == $params['origin']) {
+                        continue;
+                    } else {
+                        //only admins should be able to add those values
+                        if (!api_is_platform_admin(true, true)) {
+                            // although if not admin but sent through a CLI script, we should accept it as well
+                            if (PHP_SAPI != 'cli') {
+                                continue; //not a CLI script, so don't write the value to DB
+                            }
                         }
                     }
                 }
@@ -640,8 +644,8 @@ class ExtraFieldValue extends Model
         $sql = "SELECT s.*, field_type FROM {$this->table} s
                 INNER JOIN {$this->table_handler_field} sf ON (s.field_id = sf.id)
                 WHERE
-                    item_id = '$item_id' AND
-                    field_id = '".$field_id."' AND
+                    item_id = $item_id AND
+                    field_id = $field_id AND
                     sf.extra_field_type = ".$this->getExtraField()->getExtraFieldType()."
                 ORDER BY id";
         $result = Database::query($sql);
@@ -726,9 +730,9 @@ class ExtraFieldValue extends Model
                 INNER JOIN {$this->table_handler_field} sf
                 ON (s.field_id = sf.id)
                 WHERE
-                    field_id = '".$field_id."' AND
+                    field_id = $field_id AND
                     value LIKE '%$tag%' AND
-                    sf.extra_field_type = ".$extraFieldType."
+                    sf.extra_field_type = $extraFieldType
                 ORDER BY value
                 LIMIT 0, $limit
                 ";
@@ -770,7 +774,7 @@ class ExtraFieldValue extends Model
                 INNER JOIN {$this->table_handler_field} sf
                 ON (s.field_id = sf.id)
                 WHERE
-                    item_id = '$item_id'  AND
+                    item_id = $item_id  AND
                     variable = '$field_variable' AND
                     sf.extra_field_type = $extraFieldType
                 ";
@@ -904,7 +908,7 @@ class ExtraFieldValue extends Model
                 INNER JOIN {$this->table_handler_field} sf
                 ON (s.field_id = sf.id)
                 WHERE
-                    field_id = '".$fieldId."' AND
+                    field_id = $fieldId AND
                     sf.extra_field_type = $extraFieldType
                 ORDER BY s.value";
         $result = Database::query($sql);
@@ -960,7 +964,7 @@ class ExtraFieldValue extends Model
                 INNER JOIN {$this->table_handler_field} sf
                 ON (s.field_id = sf.id)
                 WHERE
-                    item_id = '$itemId' AND
+                    item_id = $itemId AND
                     sf.extra_field_type = $extraFieldType
                 ORDER BY s.value";
 
@@ -1035,8 +1039,8 @@ class ExtraFieldValue extends Model
                 INNER JOIN {$this->table_handler_field} sf
                 ON (s.field_id = sf.id)
                 WHERE
-                    field_id = '$fieldId' AND
-                    item_id = '$itemId' AND
+                    field_id = $fieldId AND
+                    item_id = $itemId AND
                     value = '$fieldValue' AND
                     sf.extra_field_type = $extraFieldType
                 ORDER BY value";
@@ -1078,10 +1082,10 @@ class ExtraFieldValue extends Model
 
         $sql = "DELETE FROM {$this->table}
                 WHERE
-                    item_id = '$itemId' AND
+                    item_id = $itemId AND
                     field_id IN (
                         SELECT id FROM {$this->table_handler_field}
-                        WHERE extra_field_type = ".$extraFieldType."
+                        WHERE extra_field_type = $extraFieldType
                     )
                 ";
         Database::query($sql);
@@ -1105,8 +1109,8 @@ class ExtraFieldValue extends Model
 
             $sql = "DELETE FROM {$this->table}
                 WHERE
-                    item_id = '$itemId' AND
-                    field_id = '$fieldId' AND
+                    item_id = $itemId AND
+                    field_id = $fieldId AND
                     value = '$fieldValue'
                 ";
             Database::query($sql);

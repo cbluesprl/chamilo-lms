@@ -144,8 +144,8 @@ class UniqueAnswerImage extends UniqueAnswer
         $defaults = [];
         $correct = 0;
 
-        if (!empty($this->id)) {
-            $answer = new Answer($this->id);
+        if (!empty($this->iid)) {
+            $answer = new Answer($this->iid);
             $answer->read();
 
             if ($answer->nbrAnswers > 0 && !$form->isSubmitted()) {
@@ -193,23 +193,23 @@ class UniqueAnswerImage extends UniqueAnswer
         for ($i = 1; $i <= $numberAnswers; $i++) {
             $form->addHtml('<tr>');
             if (isset($answer) && is_object($answer)) {
-                if ($answer->correct[$i]) {
+                if (isset($answer->correct[$i]) && $answer->correct[$i]) {
                     $correct = $i;
                 }
 
-                $defaults['answer['.$i.']'] = $answer->answer[$i];
-                $defaults['comment['.$i.']'] = $answer->comment[$i];
-                $defaults['weighting['.$i.']'] = float_format(
-                    $answer->weighting[$i],
-                    1
-                );
+                $defaults['answer['.$i.']'] = $answer->answer[$i] ?? '';
+                $defaults['comment['.$i.']'] = $answer->comment[$i] ?? '';
+                $defaults['weighting['.$i.']'] = isset($answer->weighting[$i]) ? float_format($answer->weighting[$i], 1) : 0;
 
-                $itemList = explode('@@', $answer->destination[$i]);
+                $itemList = [];
+                if (isset($answer->destination[$i])) {
+                    $itemList = explode('@@', $answer->destination[$i]);
+                }
 
-                $try = $itemList[0];
-                $lp = $itemList[1];
-                $listDestination = $itemList[2];
-                $url = $itemList[3];
+                $try = $itemList[0] ?? '';
+                $lp = $itemList[1] ?? '';
+                $listDestination = $itemList[2] ?? '';
+                $url = $itemList[3] ?? '';
 
                 $tryResult = 0;
                 if (0 != $try) {
@@ -299,7 +299,7 @@ class UniqueAnswerImage extends UniqueAnswer
         global $text;
         $buttonGroup = [];
         if ($objExercise->edit_exercise_in_lp == true ||
-            (empty($this->exerciseList) && empty($objExercise->id))
+            (empty($this->exerciseList) && empty($objExercise->iid))
         ) {
             //setting the save button here and not in the question class.php
             $buttonGroup[] = $form->addButtonDelete(get_lang('LessAnswer'), 'lessAnswers', true);
@@ -315,7 +315,7 @@ class UniqueAnswerImage extends UniqueAnswer
 
         $defaults['correct'] = $correct;
 
-        if (!empty($this->id)) {
+        if (!empty($this->iid)) {
             $form->setDefaults($defaults);
         } else {
             if (1 == $this->isContent) {
@@ -336,7 +336,7 @@ class UniqueAnswerImage extends UniqueAnswer
     {
         $questionWeighting = $nbrGoodAnswers = 0;
         $correct = $form->getSubmitValue('correct');
-        $objAnswer = new Answer($this->id);
+        $objAnswer = new Answer($this->iid);
         $numberAnswers = $form->getSubmitValue('nb_answers');
 
         for ($i = 1; $i <= $numberAnswers; $i++) {
@@ -346,13 +346,18 @@ class UniqueAnswerImage extends UniqueAnswer
 
             $scenario = $form->getSubmitValue('scenario');
 
+            $try = null;
+            $lp = null;
+            $destination = null;
+            $url = null;
             //$listDestination = $form -> getSubmitValue('destination'.$i);
             //$destinationStr = $form -> getSubmitValue('destination'.$i);
-
-            $try = $scenario['try'.$i];
-            $lp = $scenario['lp'.$i];
-            $destination = $scenario['destination'.$i];
-            $url = trim($scenario['url'.$i]);
+            if (!empty($scenario)) {
+                $try = $scenario['try'.$i];
+                $lp = $scenario['lp'.$i];
+                $destination = $scenario['destination'.$i];
+                $url = trim($scenario['url'.$i]);
+            }
 
             /*
               How we are going to parse the destination value
@@ -419,30 +424,5 @@ class UniqueAnswerImage extends UniqueAnswer
         // sets the total weighting of the question
         $this->updateWeighting($questionWeighting);
         $this->save($exercise);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function return_header(Exercise $exercise, $counter = null, $score = [])
-    {
-        if ($exercise->showExpectedChoice()) {
-            $header = '<table class="'.$this->question_table_class.'">
-			<tr>
-				<th>'.get_lang('Choice').'</th>';
-            if ($exercise->showExpectedChoiceColumn()) {
-                $header .= '<th>'.get_lang('ExpectedChoice').'</th>';
-            }
-            $header .= '<th>'.get_lang('Answer').'</th>';
-            $header .= '<th>'.get_lang('Status').'</th>';
-            if (false === $exercise->hideComment) {
-                $header .= '<th>'.get_lang('Comment').'</th>';
-            }
-            $header .= '</tr>';
-        } else {
-            $header = parent::return_header($exercise, $counter, $score);
-        }
-
-        return $header;
     }
 }

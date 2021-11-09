@@ -1839,6 +1839,12 @@ class CourseRestorer
             $table_rel = Database::get_course_table(TABLE_QUIZ_TEST_QUESTION);
             $table_doc = Database::get_course_table(TABLE_DOCUMENT);
             $resources = $this->course->resources;
+            // Check if the "id" column still exists
+            $idColumn = true;
+            $columns = Database::listTableColumns($table_qui);
+            if (!in_array('id', array_keys($columns))) {
+                $idColumn = false;
+            }
 
             foreach ($resources[RESOURCE_QUIZ] as $id => $quiz) {
                 if (isset($quiz->obj)) {
@@ -1929,12 +1935,12 @@ class CourseRestorer
                     }
                     $new_id = Database::insert($table_qui, $params);
 
-                    if ($new_id) {
+                    if ($new_id && $idColumn) {
                         $sql = "UPDATE $table_qui SET id = iid WHERE iid = $new_id";
                         Database::query($sql);
                     }
                 } else {
-                    // $id = -1 identifies the fictionary test for collecting
+                    // $id = -1 identifies the fictional test for collecting
                     // orphan questions. We do not store it in the database.
                     $new_id = -1;
                 }
@@ -1943,7 +1949,7 @@ class CourseRestorer
                 $order = 0;
                 if (!empty($quiz->question_ids)) {
                     foreach ($quiz->question_ids as $index => $question_id) {
-                        $qid = $this->restore_quiz_question($question_id);
+                        $qid = $this->restore_quiz_question($question_id, $idColumn);
                         $question_order = $quiz->question_orders[$index] ? $quiz->question_orders[$index] : ++$order;
                         $sql = "INSERT IGNORE INTO $table_rel SET
                                 c_id = ".$this->destination_course_id.",
@@ -1960,9 +1966,10 @@ class CourseRestorer
     /**
      * Restore quiz-questions.
      *
-     * @params int $id question id
+     * @param int  $id       Question id
+     * @param bool $idColumn Whether the 'id' column still exists in this table
      */
-    public function restore_quiz_question($id)
+    public function restore_quiz_question($id, $idColumn = true)
     {
         $em = Database::getManager();
         $resources = $this->course->resources;
@@ -2020,9 +2027,14 @@ class CourseRestorer
             $new_id = Database::insert($table_que, $params);
 
             if ($new_id) {
-                $sql = "UPDATE $table_que SET id = iid WHERE iid = $new_id";
-                Database::query($sql);
+                // If the ID column is still present, update it, otherwise just
+                // continue
+                if ($idColumn) {
+                    $sql = "UPDATE $table_que SET id = iid WHERE iid = $new_id";
+                    Database::query($sql);
+                }
             } else {
+                // If no IID was generated, stop right there and return 0
                 return 0;
             }
 
@@ -2084,7 +2096,7 @@ class CourseRestorer
                     $em->persist($quizAnswer);
                     $em->flush();
 
-                    $answerId = $quizAnswer->getIid();
+                    $answerId = $quizAnswer->getId();
 
                     if ($answerId) {
                         $quizAnswer
@@ -2133,8 +2145,13 @@ class CourseRestorer
                     $answerId = Database::insert($table_ans, $params);
 
                     if ($answerId) {
-                        $sql = "UPDATE $table_ans SET id = iid, id_auto = iid WHERE iid = $answerId";
-                        Database::query($sql);
+                        if ($idColumn) {
+                            $sql = "UPDATE $table_ans SET id = iid, id_auto = iid WHERE iid = $answerId";
+                            Database::query($sql);
+                        } else {
+                            $sql = "UPDATE $table_ans SET id_auto = iid WHERE iid = $answerId";
+                            Database::query($sql);
+                        }
                     }
 
                     $correctAnswers[$answerId] = $answer['correct'];
@@ -2147,90 +2164,139 @@ class CourseRestorer
 
             // Moving quiz_question_options
             if ($question->quiz_type == MULTIPLE_ANSWER_TRUE_FALSE) {
-                $question_option_list = Question::readQuestionOption($id, $course_id);
-
-                // Question copied from the current platform
-                if ($question_option_list) {
-                    $old_option_ids = [];
-                    foreach ($question_option_list as $item) {
-                        $old_id = $item['id'];
-                        unset($item['id']);
-                        if (isset($item['iid'])) {
-                            unset($item['iid']);
-                        }
-                        $item['question_id'] = $new_id;
-                        $item['c_id'] = $this->destination_course_id;
-                        $question_option_id = Database::insert($table_options, $item);
-                        if ($question_option_id) {
-                            $old_option_ids[$old_id] = $question_option_id;
-                            $sql = "UPDATE $table_options SET id = iid WHERE iid = $question_option_id";
-                            Database::query($sql);
-                        }
-                    }
-                    if ($old_option_ids) {
-                        $new_answers = Database::select(
-                            'iid, correct',
-                            $table_ans,
-                            [
-                                'WHERE' => [
-                                    'question_id = ? AND c_id = ? ' => [
-                                        $new_id,
-                                        $this->destination_course_id,
-                                    ],
-                                ],
-                            ]
+                if (count($question->question_options) < 3) {
+                    $options = [1 => 'True', 2 => 'False', 3 => 'DoubtScore'];
+                    $correct = [];
+                    for ($i = 1; $i <= 3; $i++) {
+                        $lastId = Question::saveQuestionOption(
+                            $new_id,
+                            $options[$i],
+                            $this->destination_course_id,
+                            $i
                         );
+                        $correct[$i] = $lastId;
+                    }
 
-                        foreach ($new_answers as $answer_item) {
-                            $params = [];
-                            $params['correct'] = $old_option_ids[$answer_item['correct']];
-                            Database::update(
-                                $table_ans,
-                                $params,
-                                [
-                                    'iid = ? AND c_id = ? AND question_id = ? ' => [
-                                        $answer_item['iid'],
-                                        $this->destination_course_id,
-                                        $new_id,
-                                    ],
+                    $correctAnswerValues = Database::select(
+                        'DISTINCT(correct)',
+                        $table_ans,
+                        [
+                            'WHERE' => [
+                                'question_id = ? AND c_id = ? ' => [
+                                    $new_id,
+                                    $this->destination_course_id,
                                 ],
-                                false
-                            );
-                        }
+                            ],
+                            'ORDER' => 'correct ASC',
+                        ]
+                    );
+                    $i = 1;
+                    foreach ($correctAnswerValues as $correctAnswer) {
+                        $params = [];
+                        $params['correct'] = $correct[$i];
+                        Database::update(
+                            $table_ans,
+                            $params,
+                            [
+                                'question_id = ? AND c_id = ? AND correct = ? ' => [
+                                    $new_id,
+                                    $this->destination_course_id,
+                                    $correctAnswer['correct'],
+                                ],
+                            ],
+                            false
+                        );
+                        $i++;
                     }
                 } else {
-                    $new_options = [];
-                    if (isset($question->question_options)) {
-                        foreach ($question->question_options as $obj) {
-                            $item = [];
+                    $question_option_list = Question::readQuestionOption($id, $course_id);
+
+                    // Question copied from the current platform
+                    if ($question_option_list) {
+                        $old_option_ids = [];
+                        foreach ($question_option_list as $item) {
+                            if (isset($item['iid'])) {
+                                $old_id = $item['iid'];
+                                unset($item['iid']);
+                                unset($item['id']);
+                            } else {
+                                $old_id = $item['id'];
+                                unset($item['id']);
+                            }
                             $item['question_id'] = $new_id;
                             $item['c_id'] = $this->destination_course_id;
-                            $item['name'] = $obj->obj->name;
-                            $item['position'] = $obj->obj->position;
                             $question_option_id = Database::insert($table_options, $item);
-
-                            if ($question_option_id) {
-                                $new_options[$obj->obj->id] = $question_option_id;
+                            if ($question_option_id && $idColumn) {
+                                $old_option_ids[$old_id] = $question_option_id;
                                 $sql = "UPDATE $table_options SET id = iid WHERE iid = $question_option_id";
                                 Database::query($sql);
                             }
                         }
-
-                        foreach ($correctAnswers as $answer_id => $correct_answer) {
-                            $params = [];
-                            $params['correct'] = isset($new_options[$correct_answer]) ? $new_options[$correct_answer] : '';
-                            Database::update(
+                        if ($old_option_ids) {
+                            $new_answers = Database::select(
+                                'iid, correct',
                                 $table_ans,
-                                $params,
                                 [
-                                    'id = ? AND c_id = ? AND question_id = ? ' => [
-                                        $answer_id,
-                                        $this->destination_course_id,
-                                        $new_id,
+                                    'WHERE' => [
+                                        'question_id = ? AND c_id = ? ' => [
+                                            $new_id,
+                                            $this->destination_course_id,
+                                        ],
                                     ],
-                                ],
-                                false
+                                ]
                             );
+
+                            foreach ($new_answers as $answer_item) {
+                                $params = [];
+                                $params['correct'] = $old_option_ids[$answer_item['correct']];
+                                Database::update(
+                                    $table_ans,
+                                    $params,
+                                    [
+                                        'iid = ? AND c_id = ? AND question_id = ? ' => [
+                                            $answer_item['iid'],
+                                            $this->destination_course_id,
+                                            $new_id,
+                                        ],
+                                    ],
+                                    false
+                                );
+                            }
+                        }
+                    } else {
+                        $new_options = [];
+                        if (isset($question->question_options)) {
+                            foreach ($question->question_options as $obj) {
+                                $item = [];
+                                $item['question_id'] = $new_id;
+                                $item['c_id'] = $this->destination_course_id;
+                                $item['name'] = $obj->obj->name;
+                                $item['position'] = $obj->obj->position;
+                                $question_option_id = Database::insert($table_options, $item);
+
+                                if ($question_option_id) {
+                                    $new_options[$obj->obj->id] = $question_option_id;
+                                    $sql = "UPDATE $table_options SET id = iid WHERE iid = $question_option_id";
+                                    Database::query($sql);
+                                }
+                            }
+
+                            foreach ($correctAnswers as $answer_id => $correct_answer) {
+                                $params = [];
+                                $params['correct'] = isset($new_options[$correct_answer]) ? $new_options[$correct_answer] : '';
+                                Database::update(
+                                    $table_ans,
+                                    $params,
+                                    [
+                                        'iid = ? AND c_id = ? AND question_id = ? ' => [
+                                            $answer_id,
+                                            $this->destination_course_id,
+                                            $new_id,
+                                        ],
+                                    ],
+                                    false
+                                );
+                            }
                         }
                     }
                 }
@@ -2255,7 +2321,7 @@ class CourseRestorer
                             $table_ans,
                             $params,
                             [
-                                'id = ? AND c_id = ? AND question_id = ? ' => [
+                                'iid = ? AND c_id = ? AND question_id = ? ' => [
                                     $answer_id,
                                     $this->destination_course_id,
                                     $new_id,

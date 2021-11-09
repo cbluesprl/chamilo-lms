@@ -19,16 +19,28 @@ class Rest extends WebService
     const EXTRA_FIELD_GCM_REGISTRATION = 'gcm_registration_id';
 
     const GET_AUTH = 'authenticate';
+    const SAVE_GCM_ID = 'gcm_id';
+    const LOGOUT = 'logout';
+
     const GET_USER_MESSAGES = 'user_messages';
-    const GET_USER_COURSES = 'user_courses';
-    const GET_USER_SESSIONS = 'user_sessions';
-    const GET_USERS_SUBSCRIBED_TO_COURSE = 'get_users_subscribed_to_course';
     const GET_USER_MESSAGES_RECEIVED = 'user_messages_received';
+    const DELETE_USER_MESSAGE = 'delete_user_message';
     const GET_USER_MESSAGES_SENT = 'user_messages_sent';
+    const GET_COUNT_NEW_MESSAGES = 'get_count_new_messages';
+    const SET_MESSAGE_READ = 'set_message_read';
     const POST_USER_MESSAGE_READ = 'user_message_read';
     const POST_USER_MESSAGE_UNREAD = 'user_message_unread';
-    const SAVE_GCM_ID = 'gcm_id';
+    const SAVE_USER_MESSAGE = 'save_user_message';
+    const GET_MESSAGE_USERS = 'message_users';
+    const VIEW_MESSAGE = 'view_message';
+
+    const GET_USER_COURSES = 'user_courses';
+    const GET_USER_SESSIONS = 'user_sessions';
+
+    const VIEW_PROFILE = 'view_user_profile';
     const GET_PROFILE = 'user_profile';
+
+    const VIEW_COURSE_HOME = 'view_course_home';
     const GET_COURSE_INFO = 'course_info';
     const GET_COURSE_DESCRIPTIONS = 'course_descriptions';
     const GET_COURSE_DOCUMENTS = 'course_documents';
@@ -42,36 +54,72 @@ class Rest extends WebService
     const GET_COURSE_LEARNPATHS = 'course_learnpaths';
     const GET_COURSE_LEARNPATH = 'course_learnpath';
     const GET_COURSE_LP_PROGRESS = 'course_lp_progress';
-    const SAVE_FORUM_POST = 'save_forum_post';
-    const SAVE_USER_MESSAGE = 'save_user_message';
-    const GET_MESSAGE_USERS = 'message_users';
+    const GET_COURSE_LINKS = 'course_links';
+    const GET_COURSE_WORKS = 'course_works';
+
     const SAVE_COURSE_NOTEBOOK = 'save_course_notebook';
+
+    const SAVE_FORUM_POST = 'save_forum_post';
     const SAVE_FORUM_THREAD = 'save_forum_thread';
-    const SAVE_COURSE = 'save_course';
-    const SAVE_USER = 'save_user';
-    const SAVE_USER_JSON = 'save_user_json';
-    const SUBSCRIBE_USER_TO_COURSE = 'subscribe_user_to_course';
-    const UNSUBSCRIBE_USER_FROM_COURSE = 'unsubscribe_user_from_course';
-    const EXTRAFIELD_GCM_ID = 'gcm_registration_id';
-    const DELETE_USER_MESSAGE = 'delete_user_message';
-    const SET_MESSAGE_READ = 'set_message_read';
+    const SET_THREAD_NOTIFY = 'set_thread_notify';
+    const DOWNLOAD_FORUM_ATTACHMENT = 'download_forum_attachment';
+
+    const GET_WORK_LIST = 'get_work_list';
+    const GET_WORK_STUDENTS_WITHOUT_PUBLICATIONS = 'get_work_students_without_publications';
+    const GET_WORK_USERS = 'get_work_users';
+    const GET_WORK_STUDENT_LIST = 'get_work_student_list';
+    const PUT_WORK_STUDENT_ITEM_VISIBILITY = 'put_course_work_visibility';
+    const DELETE_WORK_STUDENT_ITEM = 'delete_work_student_item';
+    const DELETE_WORK_CORRECTIONS = 'delete_work_corrections';
+    const DOWNLOAD_WORK_FOLDER = 'download_work_folder';
+    const DOWNLOAD_WORK_COMMENT_ATTACHMENT = 'download_work_comment_attachment';
+    const DOWNLOAD_WORK = 'download_work';
+
+    const VIEW_DOCUMENT_IN_FRAME = 'view_document_in_frame';
+
+    const VIEW_QUIZ_TOOL = 'view_quiz_tool';
+
+    const VIEW_SURVEY_TOOL = 'view_survey_tool';
+
     const CREATE_CAMPUS = 'add_campus';
     const EDIT_CAMPUS = 'edit_campus';
     const DELETE_CAMPUS = 'delete_campus';
-    const SAVE_SESSION = 'save_session';
+
     const GET_USERS = 'get_users';
+    const USERNAME_EXIST = 'username_exist';
+    const SAVE_USER = 'save_user';
+    const SAVE_USER_GET_APIKEY = 'save_user_get_apikey';
+    const SAVE_USER_JSON = 'save_user_json';
+    const UPDATE_USER_FROM_USERNAME = 'update_user_from_username';
+    const UPDATE_USER_APIKEY = 'update_user_apikey';
+    const DELETE_USER = 'delete_user';
+
     const GET_COURSES = 'get_courses';
     const GET_COURSES_FROM_EXTRA_FIELD = 'get_courses_from_extra_field';
+    const SAVE_COURSE = 'save_course';
+    const DELETE_COURSE = 'delete_course';
+
+    const GET_SESSION_FROM_EXTRA_FIELD = 'get_session_from_extra_field';
+    const SAVE_SESSION = 'save_session';
+    const CREATE_SESSION_FROM_MODEL = 'create_session_from_model';
+    const UPDATE_SESSION = 'update_session';
+
+    const SUBSCRIBE_USER_TO_COURSE = 'subscribe_user_to_course';
+    const SUBSCRIBE_USER_TO_COURSE_PASSWORD = 'subscribe_user_to_course_password';
+    const UNSUBSCRIBE_USER_FROM_COURSE = 'unsubscribe_user_from_course';
+    const GET_USERS_SUBSCRIBED_TO_COURSE = 'get_users_subscribed_to_course';
+
     const ADD_COURSES_SESSION = 'add_courses_session';
     const ADD_USERS_SESSION = 'add_users_session';
-    const CREATE_SESSION_FROM_MODEL = 'create_session_from_model';
     const SUBSCRIBE_USER_TO_SESSION_FROM_USERNAME = 'subscribe_user_to_session_from_username';
-    const GET_SESSION_FROM_EXTRA_FIELD = 'get_session_from_extra_field';
-    const UPDATE_USER_FROM_USERNAME = 'update_user_from_username';
-    const USERNAME_EXIST = 'username_exist';
+
     const GET_COURSE_QUIZ_MDL_COMPAT = 'get_course_quiz_mdl_compat';
+
     const UPDATE_USER_PAUSE_TRAINING = 'update_user_pause_training';
-    const DELETE_COURSE = 'delete_course';
+
+    const CHECK_CONDITIONAL_LOGIN = 'check_conditional_login';
+    const GET_LEGAL_CONDITIONS = 'get_legal_conditions';
+    const UPDATE_CONDITION_ACCEPTED = 'update_condition_accepted';
 
     /**
      * @var Session
@@ -151,8 +199,14 @@ class Rest extends WebService
      */
     public function setCourse($id)
     {
+        global $_course;
+
         if (!$id) {
             $this->course = null;
+
+            ChamiloSession::erase('_real_cid');
+            ChamiloSession::erase('_cid');
+            ChamiloSession::erase('_course');
 
             return;
         }
@@ -166,6 +220,13 @@ class Rest extends WebService
         }
 
         $this->course = $course;
+
+        $courseInfo = api_get_course_info($course->getCode());
+        $_course = $courseInfo;
+
+        ChamiloSession::write('_real_cid', $course->getId());
+        ChamiloSession::write('_cid', $course->getCode());
+        ChamiloSession::write('_course', $courseInfo);
     }
 
     /**
@@ -180,6 +241,9 @@ class Rest extends WebService
         if (!$id) {
             $this->session = null;
 
+            ChamiloSession::erase('session_name');
+            ChamiloSession::erase('id_session');
+
             return;
         }
 
@@ -192,6 +256,9 @@ class Rest extends WebService
         }
 
         $this->session = $session;
+
+        ChamiloSession::write('session_name', $session->getName());
+        ChamiloSession::write('id_session', $session->getId());
     }
 
     /**
@@ -254,6 +321,8 @@ class Rest extends WebService
         $lastMessages = MessageManager::getReceivedMessages($this->user->getId(), 0);
         $messages = [];
 
+        $webPath = api_get_path(WEB_PATH);
+
         foreach ($lastMessages as $message) {
             $hasAttachments = MessageManager::hasAttachments($message['id']);
             $attachmentList = [];
@@ -272,7 +341,7 @@ class Rest extends WebService
                     'pictureUri' => $message['pictureUri'],
                 ],
                 'sendDate' => $message['send_date'],
-                'content' => $message['content'],
+                'content' => str_replace('src="/"', $webPath, $message['content']),
                 'hasAttachments' => $hasAttachments,
                 'attachmentList' => $attachmentList,
                 'url' => '',
@@ -323,8 +392,18 @@ class Rest extends WebService
             $userId = $this->user->getId();
         }
 
+        Event::courseLogout(
+            [
+                'uid' => $userId,
+                'cid' => api_get_course_id(),
+                'sid' => api_get_session_id(),
+            ]
+        );
+
         $courses = CourseManager::get_courses_list_by_user_id($userId);
         $data = [];
+
+        $webCodePath = api_get_path(WEB_CODE_PATH).'webservices/api/v2.php?';
 
         foreach ($courses as $courseInfo) {
             /** @var Course $course */
@@ -341,6 +420,14 @@ class Rest extends WebService
                 'urlPicture' => $picturePath,
                 'teachers' => $teachers,
                 'isSpecial' => !empty($courseInfo['special_course']),
+                'url' => $webCodePath.http_build_query(
+                    [
+                        'action' => self::VIEW_COURSE_HOME,
+                        'api_key' => $this->apiKey,
+                        'username' => $this->user->getUsername(),
+                        'course' => $course->getId(),
+                    ]
+                ),
             ];
         }
 
@@ -386,15 +473,19 @@ class Rest extends WebService
      */
     public function getCourseDescriptions()
     {
+        Event::event_access_tool(TOOL_COURSE_DESCRIPTION);
+
         $descriptions = CourseDescription::get_descriptions($this->course->getId());
         $results = [];
+
+        $webPath = api_get_path(WEB_PATH);
 
         /** @var CourseDescription $description */
         foreach ($descriptions as $description) {
             $results[] = [
                 'id' => $description->get_description_type(),
                 'title' => $description->get_title(),
-                'content' => str_replace('src="/', 'src="'.api_get_path(WEB_PATH), $description->get_content()),
+                'content' => str_replace('src="/', 'src="'.$webPath, $description->get_content()),
             ];
         }
 
@@ -410,6 +501,8 @@ class Rest extends WebService
      */
     public function getCourseDocuments($directoryId = 0)
     {
+        Event::event_access_tool(TOOL_DOCUMENT);
+
         /** @var string $path */
         $path = '/';
         $sessionId = $this->session ? $this->session->getId() : 0;
@@ -488,6 +581,8 @@ class Rest extends WebService
      */
     public function getCourseAnnouncements()
     {
+        Event::event_access_tool(TOOL_ANNOUNCEMENT);
+
         $sessionId = $this->session ? $this->session->getId() : 0;
 
         $announcements = AnnouncementManager::getAnnouncements(
@@ -529,6 +624,8 @@ class Rest extends WebService
      */
     public function getCourseAnnouncement($announcementId)
     {
+        Event::event_access_tool(TOOL_ANNOUNCEMENT);
+
         $sessionId = $this->session ? $this->session->getId() : 0;
         $announcement = AnnouncementManager::getAnnouncementInfoById(
             $announcementId,
@@ -564,6 +661,8 @@ class Rest extends WebService
      */
     public function getCourseAgenda()
     {
+        Event::event_access_tool(TOOL_CALENDAR_EVENT);
+
         $sessionId = $this->session ? $this->session->getId() : 0;
 
         $agenda = new Agenda(
@@ -621,6 +720,8 @@ class Rest extends WebService
      */
     public function getCourseNotebooks()
     {
+        Event::event_access_tool(TOOL_NOTEBOOK);
+
         $em = Database::getManager();
         /** @var CNotebookRepository $notebooksRepo */
         $notebooksRepo = $em->getRepository('ChamiloCourseBundle:CNotebook');
@@ -651,6 +752,8 @@ class Rest extends WebService
      */
     public function getCourseForumCategories()
     {
+        Event::event_access_tool(TOOL_FORUM);
+
         $sessionId = $this->session ? $this->session->getId() : 0;
         $webCoursePath = api_get_path(WEB_COURSE_PATH).$this->course->getDirectory().'/upload/forum/images/';
 
@@ -724,6 +827,8 @@ class Rest extends WebService
      */
     public function getCourseForum($forumId)
     {
+        Event::event_access_tool(TOOL_FORUM);
+
         require_once api_get_path(SYS_CODE_PATH).'forum/forumfunction.inc.php';
 
         $sessionId = $this->session ? $this->session->getId() : 0;
@@ -766,6 +871,8 @@ class Rest extends WebService
      */
     public function getCourseForumThread($forumId, $threadId)
     {
+        Event::event_access_tool(TOOL_FORUM);
+
         require_once api_get_path(SYS_CODE_PATH).'forum/forumfunction.inc.php';
 
         $sessionId = $this->session ? $this->session->getId() : 0;
@@ -790,10 +897,84 @@ class Rest extends WebService
                 'author' => api_get_person_name($postInfo['firstname'], $postInfo['lastname']),
                 'date' => api_convert_and_format_date($postInfo['post_date'], DATE_TIME_FORMAT_LONG_24H),
                 'parentId' => $postInfo['post_parent_id'],
+                'attachments' => getAttachedFiles(
+                    $forumId,
+                    $threadId,
+                    $postInfo['iid'],
+                    0,
+                    $this->course->getId()
+                ),
             ];
         }
 
         return $thread;
+    }
+
+    public function getCourseLinks(): array
+    {
+        Event::event_access_tool(TOOL_LINK);
+
+        $courseId = $this->course->getId();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $webCodePath = api_get_path(WEB_CODE_PATH);
+        $cidReq = api_get_cidreq();
+
+        $categories = array_merge(
+            [
+                [
+                    'iid' => 0,
+                    'c_id' => $courseId,
+                    'id' => 0,
+                    'category_title' => get_lang('NoCategory'),
+                    'description' => '',
+                    'display_order' => 0,
+                    'session_id' => $sessionId,
+                    'visibility' => 1,
+                ],
+            ],
+            Link::getLinkCategories($courseId, $sessionId)
+        );
+
+        $categories = array_filter(
+            $categories,
+            function (array $category) {
+                return $category['visibility'] != 0;
+            }
+        );
+
+        return array_map(
+            function (array $category) use ($webCodePath, $cidReq, $courseId, $sessionId) {
+                $links = array_filter(
+                    Link::getLinksPerCategory($category['iid'], $courseId, $sessionId),
+                    function (array $link) {
+                        return $link['visibility'] != 0;
+                    }
+                );
+
+                $links = array_map(
+                    function (array $link) use ($webCodePath, $cidReq) {
+                        return [
+                            'id' => (int) $link['id'],
+                            'title' => Security::remove_XSS($link['title']),
+                            'description' => Security::remove_XSS($link['description']),
+                            'visibility' => (int) $link['visibility'],
+                            'url' => $webCodePath."link/link_goto.php?$cidReq&link_id=".$link['id'],
+                        ];
+                    },
+                    $links
+                );
+
+                return [
+                    'id' => (int) $category['iid'],
+                    'title' => Security::remove_XSS($category['category_title']),
+                    'description' => Security::remove_XSS($category['description']),
+                    'visibility' => (int) $category['visibility'],
+                    'links' => $links,
+                ];
+            },
+            $categories
+        );
     }
 
     /**
@@ -849,6 +1030,8 @@ class Rest extends WebService
      */
     public function getCourseLearnPaths()
     {
+        Event::event_access_tool(TOOL_LEARNPATH);
+
         $sessionId = $this->session ? $this->session->getId() : 0;
         $categoriesTempList = learnpath::getCategories($this->course->getId());
 
@@ -996,6 +1179,8 @@ class Rest extends WebService
      */
     public function saveForumPost(array $postValues, $forumId)
     {
+        Event::event_access_tool(TOOL_FORUM);
+
         require_once api_get_path(SYS_CODE_PATH).'forum/forumfunction.inc.php';
 
         $forum = get_forums($forumId, $this->course->getCode());
@@ -1015,6 +1200,8 @@ class Rest extends WebService
     {
         $data = [];
         $sessionsByCategory = UserManager::get_sessions_by_category($this->user->getId(), false);
+
+        $webCodePath = api_get_path(WEB_CODE_PATH).'webservices/api/v2.php?';
 
         foreach ($sessionsByCategory as $category) {
             $categorySessions = [];
@@ -1037,6 +1224,15 @@ class Rest extends WebService
                         'pictureUrl' => $courseInfo['course_image_large'],
                         'urlPicture' => $courseInfo['course_image_large'],
                         'teachers' => $teachers,
+                        'url' => $webCodePath.http_build_query(
+                            [
+                                'action' => self::VIEW_COURSE_HOME,
+                                'api_key' => $this->apiKey,
+                                'username' => $this->user->getUsername(),
+                                'course' => $courseInfo['real_id'],
+                                'session' => $sessions['session_id'],
+                            ]
+                        ),
                     ];
                 }
 
@@ -1134,6 +1330,8 @@ class Rest extends WebService
      */
     public function saveCourseNotebook($title, $text)
     {
+        Event::event_access_tool(TOOL_NOTEBOOK);
+
         $values = ['note_title' => $title, 'note_comment' => $text];
         $sessionId = $this->session ? $this->session->getId() : 0;
 
@@ -1156,6 +1354,8 @@ class Rest extends WebService
      */
     public function saveForumThread(array $values, $forumId)
     {
+        Event::event_access_tool(TOOL_FORUM);
+
         require_once api_get_path(SYS_CODE_PATH).'forum/forumfunction.inc.php';
 
         $sessionId = $this->session ? $this->session->getId() : 0;
@@ -1438,6 +1638,45 @@ class Rest extends WebService
     }
 
     /**
+     * @throws Exception
+     */
+    public function addUserGetApikey(array $userParams): array
+    {
+        list($userId) = $this->addUser($userParams);
+
+        UserManager::add_api_key($userId, self::SERVICE_NAME);
+
+        $apiKey = UserManager::get_api_keys($userId, self::SERVICE_NAME);
+
+        return [
+            'id' => $userId,
+            'api_key' => current($apiKey),
+        ];
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function updateUserApiKey(int $userId, string $oldApiKey): array
+    {
+        if (false === $currentApiKeys = UserManager::get_api_keys($userId, self::SERVICE_NAME)) {
+            throw new Exception(get_lang('NotAllowed'));
+        }
+
+        if (current($currentApiKeys) !== $oldApiKey) {
+            throw new Exception(get_lang('NotAllowed'));
+        }
+
+        UserManager::update_api_key($userId, self::SERVICE_NAME);
+
+        $apiKey = UserManager::get_api_keys($userId, self::SERVICE_NAME);
+
+        return [
+            'api_key' => current($apiKey),
+        ];
+    }
+
+    /**
      * Subscribe User to Course.
      *
      * @param array $params
@@ -1463,6 +1702,26 @@ class Rest extends WebService
         }
 
         return [false];
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function subscribeUserToCoursePassword($courseCode, $password)
+    {
+        $courseInfo = api_get_course_info($courseCode);
+
+        if (empty($courseInfo)) {
+            throw new Exception(get_lang('NoCourse'));
+        }
+
+        if (sha1($password) === $courseInfo['registration_code']) {
+            CourseManager::processAutoSubscribeToCourse($courseCode);
+
+            return;
+        }
+
+        throw new Exception(get_lang('CourseRegistrationCodeIncorrect'));
     }
 
     public function unSubscribeUserToCourse(array $params): array
@@ -2089,6 +2348,761 @@ class Rest extends WebService
         );
 
         return [$json];
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function updateSession(array $params): array
+    {
+        $id = $params['session_id'];
+        $reset = $params['reset'] ?? null;
+        $name = $params['name'] ?? null;
+        $coachId = isset($params['id_coach']) ? (int) $params['id_coach'] : null;
+        $sessionCategoryId = isset($params['session_category_id']) ? (int) $params['session_category_id'] : null;
+        $description = $params['description'] ?? null;
+        $showDescription = $params['show_description'] ?? null;
+        $duration = $params['duration'] ?? null;
+        $visibility = $params['visibility'] ?? null;
+        $promotionId = $params['promotion_id'] ?? null;
+        $displayStartDate = $params['display_start_date'] ?? null;
+        $displayEndDate = $params['display_end_date'] ?? null;
+        $accessStartDate = $params['access_start_date'] ?? null;
+        $accessEndDate = $params['access_end_date'] ?? null;
+        $coachStartDate = $params['coach_access_start_date'] ?? null;
+        $coachEndDate = $params['coach_access_end_date'] ?? null;
+        $sendSubscriptionNotification = $params['send_subscription_notification'] ?? null;
+        $extraFields = $params['extra'] ?? [];
+
+        $reset = (bool) $reset;
+        $visibility = (int) $visibility;
+        $tblSession = Database::get_main_table(TABLE_MAIN_SESSION);
+
+        if (!SessionManager::isValidId($id)) {
+            throw new Exception(get_lang('NoData'));
+        }
+
+        if (!empty($accessStartDate) && !api_is_valid_date($accessStartDate, 'Y-m-d H:i') &&
+            !api_is_valid_date($accessStartDate, 'Y-m-d H:i:s')
+        ) {
+            throw new Exception(get_lang('InvalidDate'));
+        }
+
+        if (!empty($accessEndDate) && !api_is_valid_date($accessEndDate, 'Y-m-d H:i') &&
+            !api_is_valid_date($accessEndDate, 'Y-m-d H:i:s')
+        ) {
+            throw new Exception(get_lang('InvalidDate'));
+        }
+
+        if (!empty($accessStartDate) && !empty($accessEndDate) && $accessStartDate >= $accessEndDate) {
+            throw new Exception(get_lang('InvalidDate'));
+        }
+
+        $values = [];
+
+        if ($reset) {
+            $values['name'] = $name;
+            $values['id_coach'] = $coachId;
+            $values['session_category_id'] = $sessionCategoryId;
+            $values['description'] = $description;
+            $values['show_description'] = $showDescription;
+            $values['duration'] = $duration;
+            $values['visibility'] = $visibility;
+            $values['promotion_id'] = $promotionId;
+            $values['display_start_date'] = !empty($displayStartDate) ? api_get_utc_datetime($displayStartDate) : null;
+            $values['display_end_date'] = !empty($displayEndDate) ? api_get_utc_datetime($displayEndDate) : null;
+            $values['access_start_date'] = !empty($accessStartDate) ? api_get_utc_datetime($accessStartDate) : null;
+            $values['access_end_date'] = !empty($accessEndDate) ? api_get_utc_datetime($accessEndDate) : null;
+            $values['coach_access_start_date'] = !empty($coachStartDate) ? api_get_utc_datetime($coachStartDate) : null;
+            $values['coach_access_end_date'] = !empty($coachEndDate) ? api_get_utc_datetime($coachEndDate) : null;
+            $values['send_subscription_notification'] = $sendSubscriptionNotification;
+        } else {
+            if (!empty($name)) {
+                $values['name'] = $name;
+            }
+
+            if (!empty($coachId)) {
+                $values['id_coach'] = $coachId;
+            }
+
+            if (!empty($sessionCategoryId)) {
+                $values['session_category_id'] = $sessionCategoryId;
+            }
+
+            if (!empty($description)) {
+                $values['description'] = $description;
+            }
+
+            if (!empty($showDescription)) {
+                $values['show_description'] = $showDescription;
+            }
+
+            if (!empty($duration)) {
+                $values['duration'] = $duration;
+            }
+
+            if (!empty($visibility)) {
+                $values['visibility'] = $visibility;
+            }
+
+            if (!empty($promotionId)) {
+                $values['promotion_id'] = $promotionId;
+            }
+
+            if (!empty($displayStartDate)) {
+                $values['display_start_date'] = api_get_utc_datetime($displayStartDate);
+            }
+
+            if (!empty($displayEndDate)) {
+                $values['display_end_date'] = api_get_utc_datetime($displayEndDate);
+            }
+
+            if (!empty($accessStartDate)) {
+                $values['access_start_date'] = api_get_utc_datetime($accessStartDate);
+            }
+
+            if (!empty($accessEndDate)) {
+                $values['access_end_date'] = api_get_utc_datetime($accessEndDate);
+            }
+
+            if (!empty($coachStartDate)) {
+                $values['coach_access_start_date'] = api_get_utc_datetime($coachStartDate);
+            }
+
+            if (!empty($coachEndDate)) {
+                $values['coach_access_end_date'] = api_get_utc_datetime($coachEndDate);
+            }
+
+            if (!empty($sendSubscriptionNotification)) {
+                $values['send_subscription_notification'] = $sendSubscriptionNotification;
+            }
+        }
+
+        Database::update(
+            $tblSession,
+            $values,
+            ['id = ?' => $id]
+        );
+
+        if (!empty($extraFields)) {
+            $extraFields['item_id'] = $id;
+            $sessionFieldValue = new ExtraFieldValue('session');
+            $sessionFieldValue->saveFieldValues($extraFields);
+        }
+
+        return [
+            'status' => true,
+            'message' => get_lang('Updated'),
+            'id_session' => $id,
+        ];
+    }
+
+    public function checkConditionalLogin(): bool
+    {
+        $file = api_get_path(SYS_CODE_PATH).'auth/conditional_login/conditional_login.php';
+
+        if (!file_exists($file)) {
+            return true;
+        }
+
+        include_once $file;
+
+        if (!isset($login_conditions)) {
+            return true;
+        }
+
+        foreach ($login_conditions as $condition) {
+            //If condition fails we redirect to the URL defined by the condition
+            if (!isset($condition['conditional_function'])) {
+                continue;
+            }
+
+            $function = $condition['conditional_function'];
+            $result = $function(['user_id' => $this->user->getId()]);
+
+            if ($result == false) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function getLegalConditions(): array
+    {
+        $language = api_get_language_id(
+            api_get_interface_language()
+        );
+
+        $termPreview = LegalManager::get_last_condition($language);
+
+        if ($termPreview) {
+            return $termPreview;
+        }
+
+        $language = api_get_language_id(
+            api_get_setting('platformLanguage')
+        );
+
+        $termPreview = LegalManager::get_last_condition($language);
+
+        if ($termPreview) {
+            return $termPreview;
+        }
+
+        $language = api_get_language_id('english');
+
+        return LegalManager::get_last_condition($language);
+    }
+
+    public function updateConditionAccepted()
+    {
+        $legalAcceptType = $_POST['legal_accept_type'] ?? null;
+
+        $condArray = explode(':', $legalAcceptType);
+        $condArray = array_map('intval', $condArray);
+
+        if (empty($condArray[0]) || empty($condArray[1])) {
+            return;
+        }
+
+        $conditionToSave = intval($condArray[0]).':'.intval($condArray[1]).':'.time();
+
+        LegalManager::sendEmailToUserBoss(
+            $this->user->getId(),
+            $conditionToSave
+        );
+    }
+
+    public function logout()
+    {
+        online_logout($this->user->getId());
+
+        Event::courseLogout(
+            [
+                'uid' => $this->user->getId(),
+                'cid' => $this->course ? $this->course->getId() : 0,
+                'sid' => $this->session ? $this->session->getId() : 0,
+            ]
+        );
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function setThreadNotify(int $threadId): string
+    {
+        require_once api_get_path(SYS_CODE_PATH).'forum/forumfunction.inc.php';
+
+        $result = set_notification(
+            'thread',
+            $threadId,
+            false,
+            api_get_user_info($this->user->getId()),
+            api_get_course_info($this->course->getCode())
+        );
+
+        if (false === $result) {
+            throw new Exception(get_lang('NotAllowed'));
+        }
+
+        return $result;
+    }
+
+    public function getCourseWorks(): array
+    {
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        $isAllowedToEdit = $this->user->getStatus() !== STUDENT;
+
+        $courseId = $this->course->getId();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $courseInfo = api_get_course_info_by_id($this->course->getId());
+
+        $works = array_filter(
+            getWorkListTeacherData($courseId, $sessionId, 0, 0, 0, 'title', 'ASC', ''),
+            function (array $work) use ($isAllowedToEdit, $courseInfo, $courseId, $sessionId) {
+                if (!$isAllowedToEdit
+                    && !userIsSubscribedToWork($this->user->getId(), $work['id'], $courseId)
+                ) {
+                    return false;
+                }
+
+                $visibility = api_get_item_visibility($courseInfo, 'work', $work['id'], $sessionId);
+
+                if (!$isAllowedToEdit && $visibility != 1) {
+                    return false;
+                }
+
+                return true;
+            }
+        );
+
+        return array_map(
+            function (array $work) use ($isAllowedToEdit, $courseInfo) {
+                $work['type'] = 'work.png';
+
+                if (!$isAllowedToEdit) {
+                    $workList = get_work_user_list(
+                        0,
+                        1000,
+                        null,
+                        null,
+                        $work['id'],
+                        ' AND u.id = '.$this->user->getId()
+                    );
+
+                    $count = getTotalWorkComment($workList, $courseInfo);
+                    $lastWork = getLastWorkStudentFromParentByUser($this->user->getId(), $work, $courseInfo);
+
+                    $work['feedback'] = ' '.Display::label('0 '.get_lang('Feedback'), 'warning');
+
+                    if (!empty($count)) {
+                        $work['feedback'] = ' '.Display::label($count.' '.get_lang('Feedback'), 'info');
+                    }
+
+                    $work['last_upload'] = '';
+
+                    if (!empty($lastWork)) {
+                        $work['last_upload'] = !empty($lastWork['qualification'])
+                            ? $lastWork['qualification_rounded'].' - '
+                            : '';
+                        $work['last_upload'] .= api_get_local_time($lastWork['sent_date']);
+                    }
+                }
+
+                return $work;
+            },
+            $works
+        );
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function putCourseWorkVisibility(int $workId, int $status): bool
+    {
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        $courseInfo = api_get_course_info_by_id($this->course->getId());
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        switch ($status) {
+            case 1:
+                return makeVisible($workId, $courseInfo);
+            case 0:
+                return makeInvisible($workId, $courseInfo);
+            default:
+                throw new Exception(get_lang('ActionNotAllowed'));
+        }
+    }
+
+    public function deleteWorkStudentItem(int $workId): string
+    {
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        $courseInfo = api_get_course_info_by_id($this->course->getId());
+
+        $fileDeleted = deleteWorkItem($workId, $courseInfo);
+
+        if ($fileDeleted) {
+            return get_lang('TheDocumentHasBeenDeleted');
+        }
+
+        return get_lang('YouAreNotAllowedToDeleteThisDocument');
+    }
+
+    public function deleteWorkCorrections(int $workId): string
+    {
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        $courseInfo = api_get_course_info_by_id($this->course->getId());
+
+        $result = get_work_user_list(null, null, null, null, $workId);
+
+        if ($result) {
+            foreach ($result as $item) {
+                $workInfo = get_work_data_by_id($item['id']);
+
+                deleteCorrection($courseInfo, $workInfo);
+            }
+        }
+
+        return get_lang('Deleted');
+    }
+
+    public function getWorkList(int $workId): array
+    {
+        $isAllowedToEdit = api_is_allowed_to_edit();
+
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        $userId = $this->user->getId();
+        $courseId = $this->course->getId();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $courseInfo = api_get_course_info_by_id($courseId);
+        $webPath = api_get_path(WEB_PATH);
+
+        $whereCondition = !$isAllowedToEdit ? " AND u.id = $userId" : '';
+
+        $works = get_work_user_list(
+            0,
+            0,
+            'title',
+            'asc',
+            $workId,
+            $whereCondition,
+            null,
+            false,
+            $courseId,
+            $sessionId
+        );
+
+        return array_map(
+            function (array $work) use ($courseInfo, $webPath) {
+                $itemId = $work['id'];
+                $count = getWorkCommentCount($itemId, $courseInfo);
+
+                $work['feedback'] = $count.' '.Display::returnFontAwesomeIcon('comments-o');
+                $work['feedback_clean'] = $count;
+
+                $workInfo = get_work_data_by_id($itemId);
+                $commentsTmp = getWorkComments($workInfo);
+                $comments = [];
+
+                foreach ($commentsTmp as $comment) {
+                    $comment['comment'] = str_replace('src="/', 'src="'.$webPath.'app/', $comment['comment']);
+                    $comments[] = $comment;
+                }
+
+                $work['comments'] = $comments;
+
+                if (empty($workInfo['qualificator_id'])) {
+                    $qualificator_id = Display::label(get_lang('NotRevised'), 'warning');
+                } else {
+                    $qualificator_id = Display::label(get_lang('Revised'), 'success');
+                }
+
+                $work['qualificator_id'] = $qualificator_id;
+
+                return $work;
+            },
+            $works
+        );
+    }
+
+    public function getWorkStudentsWithoutPublications(int $workId): array
+    {
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        return get_list_users_without_publication($workId);
+    }
+
+    public function getWorkUsers(int $workId): array
+    {
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        $courseId = $this->course->getId();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+        $courseInfo = api_get_course_info_by_id($courseId);
+
+        $items = getAllUserToWork($workId, $courseId);
+        $usersAdded = [];
+        $result = [
+            'users_added' => [],
+            'users_to_add' => [],
+        ];
+
+        if (!empty($items)) {
+            foreach ($items as $data) {
+                $usersAdded[] = $data['user_id'];
+
+                $userInfo = api_get_user_info($data['user_id']);
+
+                $result['users_added'][] = [
+                    'user_id' => (int) $data['user_id'],
+                    'complete_name_with_username' => $userInfo['complete_name_with_username'],
+                ];
+            }
+        }
+
+        if (empty($sessionId)) {
+            $status = STUDENT;
+        } else {
+            $status = 0;
+        }
+
+        $userList = CourseManager::get_user_list_from_course_code(
+            $courseInfo['code'],
+            $sessionId,
+            null,
+            null,
+            $status
+        );
+
+        $userToAddList = [];
+        foreach ($userList as $user) {
+            if (!in_array($user['user_id'], $usersAdded)) {
+                $userToAddList[] = $user;
+            }
+        }
+
+        if (!empty($userToAddList)) {
+            foreach ($userToAddList as $user) {
+                $userName = api_get_person_name($user['firstname'], $user['lastname']).' ('.$user['username'].') ';
+
+                $result['users_to_add'][] = [
+                    'user_id' => (int) $user['user_id'],
+                    'complete_name_with_username' => $userName,
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    public function getWorkStudentList(int $workId): array
+    {
+        Event::event_access_tool(TOOL_STUDENTPUBLICATION);
+
+        require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
+
+        $courseId = $this->course->getId();
+        $courseCode = $this->course->getCode();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $myFolderData = get_work_data_by_id($workId);
+
+        $workParents = [];
+
+        if (empty($myFolderData)) {
+            $workParents = getWorkList($workId, $myFolderData);
+        }
+
+        $workIdList = [];
+
+        if (!empty($workParents)) {
+            foreach ($workParents as $work) {
+                $workIdList[] = $work->id;
+            }
+        }
+
+        $userList = getWorkUserList(
+            $courseCode,
+            $sessionId,
+            0,
+            0,
+            null,
+            null,
+            null
+        );
+
+        return array_map(
+            function ($userId) use ($courseId, $sessionId, $workParents, $workIdList) {
+                $user = api_get_user_info($userId);
+
+                $userWorks = 0;
+
+                if (!empty($workIdList)) {
+                    $userWorks = getUniqueStudentAttempts(
+                        $workIdList,
+                        0,
+                        $courseId,
+                        $sessionId,
+                        $user['user_id']
+                    );
+                }
+
+                $works = $userWorks." / ".count($workParents);
+
+                return [
+                    'id' => $userId,
+                    'complete_name' => api_get_person_name($user['firstname'], $user['lastname']),
+                    'works' => $works,
+                ];
+            },
+            $userList
+        );
+    }
+
+    public function viewUserProfile(int $userId)
+    {
+        $url = api_get_path(WEB_CODE_PATH).'social/profile.php';
+
+        if ($userId) {
+            $url .= '?'.http_build_query(['u' => $userId]);
+        }
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function viewCourseHome()
+    {
+        $url = api_get_course_url($this->course->getCode(), $this->session ? $this->session->getId() : 0);
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function viewDocumentInFrame(int $documentId)
+    {
+        $courseCode = $this->course->getCode();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $url = api_get_path(WEB_CODE_PATH).'document/showinframes.php?'
+            .http_build_query(
+                [
+                    'cidReq' => $courseCode,
+                    'id_session' => $sessionId,
+                    'gidReq' => 0,
+                    'gradebook' => 0,
+                    'origin' => self::SERVICE_NAME,
+                    'id' => $documentId,
+                ]
+            );
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function viewQuizTool()
+    {
+        $courseCode = $this->course->getCode();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $url = api_get_path(WEB_CODE_PATH).'exercise/exercise.php?'
+            .http_build_query(
+                [
+                    'cidReq' => $courseCode,
+                    'id_session' => $sessionId,
+                    'gidReq' => 0,
+                    'gradebook' => 0,
+                    'origin' => self::SERVICE_NAME,
+                ]
+            );
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function viewSurveyTool()
+    {
+        $courseCode = $this->course->getCode();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $url = api_get_path(WEB_CODE_PATH).'survey/survey_list.php?'
+            .http_build_query(
+                [
+                    'cidReq' => $courseCode,
+                    'id_session' => $sessionId,
+                    'gidReq' => 0,
+                    'gradebook' => 0,
+                    'origin' => self::SERVICE_NAME,
+                ]
+            );
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function viewMessage(int $messageId)
+    {
+        $url = api_get_path(WEB_CODE_PATH).'messages/view_message.php?'.http_build_query(['id' => $messageId]);
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function downloadForumPostAttachment(string $path)
+    {
+        $courseCode = $this->course->getCode();
+        $sessionId = $this->session ? $this->session->getId() : 0;
+
+        $url = api_get_path(WEB_CODE_PATH).'forum/download.php?'
+            .http_build_query(
+                [
+                    'cidReq' => $courseCode,
+                    'id_session' => $sessionId,
+                    'gidReq' => 0,
+                    'gradebook' => 0,
+                    'origin' => self::SERVICE_NAME,
+                    'file' => Security::remove_XSS($path),
+                ]
+            );
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function downloadWorkFolder(int $workId)
+    {
+        $cidReq = api_get_cidreq();
+        $url = api_get_path(WEB_CODE_PATH)."work/downloadfolder.inc.php?id=$workId&$cidReq";
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function downloadWorkCommentAttachment(int $commentId)
+    {
+        $cidReq = api_get_cidreq();
+        $url = api_get_path(WEB_CODE_PATH)."work/download_comment_file.php?comment_id=$commentId&$cidReq";
+
+        header("Location: $url");
+        exit;
+    }
+
+    public function downloadWork(int $workId, bool $isCorrection = false)
+    {
+        $cidReq = api_get_cidreq();
+        $url = api_get_path(WEB_CODE_PATH)."work/download.php?$cidReq&"
+            .http_build_query(
+                [
+                    'id' => $workId,
+                    'correction' => $isCorrection ? 1 : null,
+                ]
+            );
+
+        header("Location: $url");
+        exit;
+    }
+
+    public static function isAllowedByRequest(bool $inpersonate = false): bool
+    {
+        $username = $_GET['username'] ?? null;
+        $apiKey = $_GET['api_key'] ?? null;
+
+        if (empty($username) || empty($apiKey)) {
+            return false;
+        }
+
+        try {
+            $restApi = self::validate($username, $apiKey);
+        } catch (Exception $e) {
+            return false;
+        }
+
+        if ($inpersonate) {
+            Login::init_user($restApi->getUser()->getId(), true);
+        }
+
+        return (bool) $restApi;
     }
 
     /**

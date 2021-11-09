@@ -164,6 +164,9 @@ class ExtraField extends Model
                 break;
             case 'lp_view':
                 $this->extraFieldType = EntityExtraField::LP_VIEW_TYPE;
+                break;
+            case 'course_announcement':
+                $this->extraFieldType = EntityExtraField::COURSE_ANNOUNCEMENT;
         }
 
         $this->pageUrl = 'extra_fields.php?type='.$this->type;
@@ -195,6 +198,7 @@ class ExtraField extends Model
             'exercise',
             'track_exercise',
             'lp_view',
+            'course_announcement',
         ];
 
         if (api_get_configuration_value('allow_scheduled_announcements')) {
@@ -3120,7 +3124,18 @@ JAVASCRIPT;
         $tagRelExtraTable = Database::get_main_table(TABLE_MAIN_EXTRA_FIELD_REL_TAG);
         $tagTable = Database::get_main_table(TABLE_MAIN_TAG);
         $optionsTable = Database::get_main_table(TABLE_EXTRA_FIELD_OPTIONS);
-        $value = Database::escape_string(implode("','", $options));
+
+        $cleanOptions = [];
+        foreach ($options as $option) {
+            $cleanOptions[] = Database::escape_string($option);
+        }
+        $cleanOptions = array_filter($cleanOptions);
+
+        if (empty($cleanOptions)) {
+            return [];
+        }
+
+        $value = implode("','", $cleanOptions);
 
         $sql = "SELECT DISTINCT t.*, v.value, o.display_text
                 FROM $tagRelExtraTable te

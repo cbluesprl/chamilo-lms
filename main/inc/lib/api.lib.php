@@ -518,6 +518,7 @@ define('MATCHING_DRAGGABLE', 19);
 define('ANNOTATION', 20);
 define('READING_COMPREHENSION', 21);
 define('MULTIPLE_ANSWER_TRUE_FALSE_DEGREE_CERTAINTY', 22);
+define('UPLOAD_ANSWER', 23);
 
 define('EXERCISE_CATEGORY_RANDOM_SHUFFLED', 1);
 define('EXERCISE_CATEGORY_RANDOM_ORDERED', 2);
@@ -547,6 +548,7 @@ define('ITEM_TYPE_ATTENDANCE', 8);
 define('ITEM_TYPE_SURVEY', 9);
 define('ITEM_TYPE_FORUM_THREAD', 10);
 define('ITEM_TYPE_PORTFOLIO', 11);
+define('ITEM_TYPE_GRADEBOOK_EVALUATION', 12);
 
 // one big string with all question types, for the validator in pear/HTML/QuickForm/Rule/QuestionType
 define(
@@ -1186,6 +1188,7 @@ function api_protect_course_script($print_headers = false, $allow_session_admins
     }
 
     $isAllowedInCourse = api_is_allowed_in_course();
+
     $is_visible = false;
     if (isset($course_info) && isset($course_info['visibility'])) {
         switch ($course_info['visibility']) {
@@ -1245,6 +1248,11 @@ function api_protect_course_script($print_headers = false, $allow_session_admins
     if (!empty($session_id)) {
         // $isAllowedInCourse was set in local.inc.php
         if (!$isAllowedInCourse) {
+            $is_visible = false;
+        }
+
+        // Check if course is inside session.
+        if (!SessionManager::relation_session_course_exist($session_id, $course_info['real_id'])) {
             $is_visible = false;
         }
     }
@@ -2778,6 +2786,7 @@ function api_get_session_info($id)
  * @param int  $session_id
  * @param int  $courseId
  * @param bool $ignore_visibility_for_admins
+ * @param int  $userId
  *
  * @return int
  *             0 = session still available,
@@ -3935,7 +3944,12 @@ function api_not_allowed(
         $show_headers = 1;
     }
 
-    $tpl = new Template(null, $show_headers, $show_headers, false, true, false, true, $responseCode);
+    $hideBreadCrumb = false;
+    if (api_get_configuration_value('hide_breadcrumb_if_not_allowed')) {
+        $hideBreadCrumb = true;
+    }
+
+    $tpl = new Template(null, $show_headers, $show_headers, $hideBreadCrumb, true, false, true, $responseCode);
     $tpl->assign('hide_login_link', 1);
     $tpl->assign('content', $msg);
 
@@ -3949,6 +3963,10 @@ function api_not_allowed(
         $tpl->display_one_col_template();
         exit;
     }
+
+    $tplPlugin = new AppPlugin();
+    $loginTopRegionContent = $tplPlugin->load_region('login_top', $tpl, true);
+    $loginBottomRegionContent = $tplPlugin->load_region('login_bottom', $tpl, true);
 
     if (!empty($_SERVER['REQUEST_URI']) &&
         (
@@ -3990,9 +4008,11 @@ function api_not_allowed(
             $content .= "<p style='text-align:center'><a href='#' onclick='$(this).parent().next().toggle()'>".get_lang('LoginWithExternalAccount')."</a></p>";
             $content .= "<div style='display:none;'>";
         }
+        $content .= PHP_EOL.$loginTopRegionContent;
         $content .= '<div class="well">';
         $content .= $form->returnForm();
         $content .= '</div>';
+        $content .= PHP_EOL.$loginBottomRegionContent;
         if (api_is_cas_activated()) {
             $content .= "</div>";
         }
@@ -4043,9 +4063,11 @@ function api_not_allowed(
             $msg .= "<div style='display:none;'>";
         }
         $form = api_get_not_allowed_login_form();
+        $msg .= PHP_EOL.$loginTopRegionContent;
         $msg .= '<div class="well">';
         $msg .= $form->returnForm();
         $msg .= '</div>';
+        $msg .= PHP_EOL.$loginBottomRegionContent;
         if ($casEnabled) {
             $msg .= "</div>";
         }
@@ -4067,9 +4089,11 @@ function api_not_allowed(
 
         if (api_is_anonymous()) {
             $form = api_get_not_allowed_login_form();
+            $msg .= PHP_EOL.$loginTopRegionContent;
             $msg .= '<div class="well">';
             $msg .= $form->returnForm();
             $msg .= '</div>';
+            $msg .= PHP_EOL.$loginBottomRegionContent;
         }
     }
 
@@ -5223,15 +5247,21 @@ function api_get_visual_theme()
 {
     static $visual_theme;
 
-    // If call from CLI it should be reload.
+    $course_id = api_get_course_id();
+    $courseThemeAvailable = false;
+    // If called from CLI or from inside a course, it should be reloaded.
     if ('cli' === PHP_SAPI) {
         $visual_theme = null;
+    } elseif (!empty($course_id)) {
+        $courseThemeAvailable = api_get_setting('allow_course_theme') == 'true';
+        if ($courseThemeAvailable) {
+            $visual_theme = null;
+        }
     }
 
     if (!isset($visual_theme)) {
         $cacheAvailable = api_get_configuration_value('apc');
         $userThemeAvailable = api_get_setting('user_selected_theme') == 'true';
-        $courseThemeAvailable = api_get_setting('allow_course_theme') == 'true';
         // only use a shared cache if no user-based or course-based theme is allowed
         $useCache = ($cacheAvailable && !$userThemeAvailable && !$courseThemeAvailable);
         $apcVar = '';
@@ -5276,7 +5306,6 @@ function api_get_visual_theme()
             }
         }
 
-        $course_id = api_get_course_id();
         if (!empty($course_id)) {
             if ($courseThemeAvailable) {
                 $course_theme = api_get_course_setting('course_theme', api_get_course_info());

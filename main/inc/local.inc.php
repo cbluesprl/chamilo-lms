@@ -281,9 +281,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
 
         $load = true;
         if (isset($cas['skip_force_redirect_in'])) {
-            $skipCas = [
-                '/main/webservices/',
-            ];
+            $skipCas = $cas['skip_force_redirect_in'];
             foreach ($skipCas as $folder) {
                 if (false !== strpos($_SERVER['REQUEST_URI'], $folder)) {
                     $load = false;
@@ -340,15 +338,67 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                             break;
                     }
                 }
-
                 // $login is set and the user exists in the database
 
+                // Check if the account is active (not locked)
+                if ($_user['active'] == '1') {
+                    // Check if the expiration date has not been reached
+                    if ($_user['expiration_date'] > date('Y-m-d H:i:s')
+                        || empty($_user['expiration_date'])
+                    ) {
+                        global $_configuration;
+
+                        if (api_is_multiple_url_enabled()) {
+                            // Check if user is an admin
+                            $my_user_is_admin = UserManager::is_admin($_user['user_id']);
+
+                            // This user is subscribed in these sites => $my_url_list
+                            $my_url_list = api_get_access_url_from_user($_user['user_id']);
+
+                            //Check the access_url configuration setting if
+                            // the user is registered in the access_url_rel_user table
+                            //Getting the current access_url_id of the platform
+                            $current_access_url_id = api_get_current_access_url_id();
+
+                            // the user have the permissions to enter at this site
+                            if (is_array($my_url_list) &&
+                                in_array($current_access_url_id, $my_url_list)
+                            ) {
+                                Session::write('_user', $_user);
+                                Event::eventLogin($_user['user_id']);
+                                $logging_in = true;
+                            } else {
+                                phpCAS::logout();
+                                $location = api_get_path(WEB_PATH)
+                                    .'index.php?loginFailed=1&error=access_url_inactive';
+                                header('Location: '.$location);
+                                exit;
+                            }
+                        }
+                        Session::write('_user', $_user);
+                        Event::eventLogin($_user['user_id']);
+                        $logging_in = true;
+                    } else {
+                        phpCAS::logout();
+                        header(
+                            'Location: '.api_get_path(WEB_PATH)
+                            .'index.php?loginFailed=1&error=account_expired'
+                        );
+                        exit;
+                    }
+                } else {
+                    phpCAS::logout();
+                    header(
+                        'Location: '.api_get_path(WEB_PATH)
+                        .'index.php?loginFailed=1&error=account_inactive'
+                    );
+                    exit;
+                }
                 // update the user record from LDAP if so required by settings
                 if ('true' === api_get_setting("update_user_info_cas_with_ldap")) {
                     UserManager::updateUserFromLDAP($login);
                 }
 
-                Session::write('_user', $_user);
                 $doNotRedirectToCourse = true; // we should already be on the right page, no need to redirect
             }
         }
@@ -516,6 +566,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                     if (is_array($my_url_list) &&
                                         in_array($current_access_url_id, $my_url_list)
                                     ) {
+                                        UserManager::redirectToResetPassword($uData['user_id']);
                                         ConditionalLogin::check_conditions($uData);
 
                                         $_user['user_id'] = $uData['user_id'];
@@ -536,9 +587,9 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                         exit;
                                     }
                                 } else {
-                                    //Only admins of the "main" (first) Chamilo portal can login wherever they want
+                                    // Only admins of the "main" (first) Chamilo portal can login wherever they want
                                     if (in_array(1, $my_url_list)) {
-                                        //Check if this admin have the access_url_id = 1 which means the principal
+                                        // Check if this admin have the access_url_id = 1 which means the principal
                                         ConditionalLogin::check_conditions($uData);
                                         $_user['user_id'] = $uData['user_id'];
                                         $_user['status'] = $uData['status'];
@@ -548,6 +599,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                     } else {
                                         //This means a secondary admin wants to login so we check as he's a normal user
                                         if (in_array($current_access_url_id, $my_url_list)) {
+                                            UserManager::redirectToResetPassword($uData['user_id']);
                                             $_user['user_id'] = $uData['user_id'];
                                             $_user['status'] = $uData['status'];
                                             Session::write('_user', $_user);
@@ -566,6 +618,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                     }
                                 }
                             } else {
+                                UserManager::redirectToResetPassword($uData['user_id']);
                                 ConditionalLogin::check_conditions($uData);
                                 $_user['user_id'] = $uData['user_id'];
                                 $_user['status'] = $uData['status'];
@@ -1297,8 +1350,22 @@ if ((isset($uidReset) && $uidReset) || $cidReset) {
 
         // We are in a session course? Check session permissions
         if (!empty($session_id)) {
-            if (!empty($session_id) && !empty($_course)) {
+            if (!empty($_course)) {
                 if (!SessionManager::relation_session_course_exist($session_id, $_course['real_id'])) {
+                    // Deleting all access.
+                    Session::erase('session_name');
+                    Session::erase('id_session');
+                    Session::erase('_real_cid');
+                    Session::erase('_cid');
+                    Session::erase('_course');
+                    Session::erase('_gid');
+                    Session::erase('is_courseAdmin');
+                    Session::erase('is_courseMember');
+                    Session::erase('is_courseTutor');
+                    Session::erase('is_session_general_coach');
+                    Session::erase('is_allowed_in_course');
+                    Session::erase('is_sessionAdmin');
+
                     api_not_allowed(true);
                 }
             }

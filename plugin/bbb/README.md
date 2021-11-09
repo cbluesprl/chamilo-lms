@@ -60,10 +60,27 @@ ALTER TABLE plugin_bbb_room MODIFY COLUMN out_at datetime;
 ```
 
 For version 2.8
-
 ```sql
 ALTER TABLE plugin_bbb_meeting ADD COLUMN internal_meeting_id VARCHAR(255) DEFAULT NULL;
 ALTER TABLE plugin_bbb_room ADD close INT NOT NULL DEFAULT 0;
+```
+
+For version 2.9 (Optional, requires an update version of BBB)
+
+```sql
+ALTER TABLE plugin_bbb_room DROP COLUMN interface;
+ALTER TABLE plugin_bbb_meeting DROP COLUMN interface;
+```
+
+For version 2.10 (Handles multiple recording formats - Check https://github.com/chamilo/chamilo-lms/issues/3703)
+
+```sql
+CREATE TABLE plugin_bbb_meeting_format (
+	id int unsigned not null PRIMARY KEY AUTO_INCREMENT,
+	meeting_id int unsigned not null,
+	format_type varchar(255) not null,
+	resource_url text not null
+)
 ```
 
 ## Improve access tracking in BBB

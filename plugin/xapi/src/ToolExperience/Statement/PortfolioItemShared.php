@@ -60,7 +60,7 @@ class PortfolioItemShared extends BaseStatement
         );
 
         return new Statement(
-            null,
+            $this->generateStatementId('portfolio-item'),
             $userActor->generate(),
             $sharedVerb->generate(),
             $itemActivity->generate(),

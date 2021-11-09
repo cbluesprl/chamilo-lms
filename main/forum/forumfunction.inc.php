@@ -291,8 +291,8 @@ function show_add_forum_form($inputvalues = [], $lp_id = 0)
 
     // Dropdown list: Forum categories
     $forum_categories = get_forum_categories();
-    foreach ($forum_categories as $key => $value) {
-        $forum_categories_titles[$value['cat_id']] = $value['cat_title'];
+    foreach ($forum_categories as $value) {
+        $forum_categories_titles[$value['cat_id']] = Security::remove_XSS($value['cat_title']);
     }
     $form->addElement(
         'select',
@@ -3276,7 +3276,7 @@ function show_add_post_form($current_forum, $action, $form_values = [], $showPre
     }
 
     if ($action === 'newthread') {
-        Skill::addSkillsToForm($form, ITEM_TYPE_FORUM_THREAD, 0);
+        Skill::addSkillsToForm($form, api_get_course_int_id(), api_get_session_id(), ITEM_TYPE_FORUM_THREAD, 0);
     }
 
     if (api_is_allowed_to_edit(null, true) && $action == 'newthread') {
@@ -4690,12 +4690,13 @@ function move_thread_form()
         </div>
         <div class="formw">';
     $htmlcontent .= '<select name="forum">';
-    foreach ($forum_categories as $key => $category) {
+    foreach ($forum_categories as $category) {
         $htmlcontent .= '<optgroup label="'.$category['cat_title'].'">';
         foreach ($forums as $key => $forum) {
             if (isset($forum['forum_category'])) {
                 if ($forum['forum_category'] == $category['cat_id']) {
-                    $htmlcontent .= '<option value="'.$forum['forum_id'].'">'.$forum['forum_title'].'</option>';
+                    $htmlcontent .= '<option value="'.$forum['forum_id'].'">'.
+                        Security::remove_XSS($forum['forum_title']).'</option>';
                 }
             }
         }
@@ -6419,6 +6420,8 @@ function getAttachedFiles(
     if ($result !== false && Database::num_rows($result) > 0) {
         while ($row = Database::fetch_array($result, 'ASSOC')) {
             // name contains an URL to download attachment file and its filename
+            $json['filename'] = $row['filename'];
+            $json['path'] = $row['path'];
             $json['name'] = Display::url(
                 api_htmlentities($row['filename']),
                 api_get_path(WEB_CODE_PATH).'forum/download.php?file='.$row['path'].'&'.api_get_cidreq(),

@@ -147,7 +147,7 @@ switch ($action) {
             $title = '';
             if (!empty($sessionToExport)) {
                 $sessionInfo = api_get_session_info($sessionToExport);
-                $title .= '_'.$sessionInfo['name'];
+                $title .= '_'.Security::remove_XSS($sessionInfo['name']);
             }
 
             $fileName = 'report'.$title.'_'.$user_info['complete_name'];
@@ -269,6 +269,93 @@ switch ($action) {
             Display::addFlash(Display::return_message(get_lang('LPWasReset'), 'success'));
             Security::clear_token();
         }
+        break;
+    case 'lp_stats_to_export_pdf':
+        $categoriesTempList = learnpath::getCategories($courseInfo['real_id']);
+        $categoryTest = new CLpCategory();
+        $categoryTest->setId(0);
+        $categoryTest->setName(get_lang('WithOutCategory'));
+        $categoryTest->setPosition(0);
+        $categories = [
+            $categoryTest,
+        ];
+
+        if (!empty($categoriesTempList)) {
+            $categories = array_merge($categories, $categoriesTempList);
+        }
+
+        $userEntity = api_get_user_entity($student_id);
+        $courseTable = '';
+        /** @var CLpCategory $item */
+        foreach ($categories as $item) {
+            $categoryId = $item->getId();
+            if (!learnpath::categoryIsVisibleForStudent($item, $userEntity, $courseInfo['real_id'], $sessionId)) {
+                continue;
+            }
+
+            $list = new LearnpathList(
+                $student_id,
+                $courseInfo,
+                $sessionId,
+                null,
+                false,
+                $categoryId,
+                false,
+                true
+            );
+            $flatList = $list->get_flat_list();
+            foreach ($flatList as $learnpath) {
+                $lpId = $learnpath['lp_old_id'];
+                $output = Tracking::getLpStatsContentToPdf(
+                    $student_id,
+                    $courseInfo,
+                    $sessionId,
+                    $lpId,
+                    $learnpath['lp_name']
+                );
+                $courseTable .= $output;
+            }
+        }
+
+        $pdfTitle = get_lang('TestResult');
+        $sessionInfo = api_get_session_info($sessionId);
+        $studentInfo = api_get_user_info($student_id);
+        $tpl = new Template('', false, false, false, true, false, false);
+        $tpl->assign('title', $pdfTitle);
+        $tpl->assign('session_title', $sessionInfo['name']);
+        $tpl->assign('session_info', $sessionInfo);
+        $tpl->assign('table_course', $courseTable);
+
+        $content = $tpl->fetch($tpl->get_template('my_space/pdf_lp_stats.tpl'));
+
+        $params = [
+            'pdf_title' => $pdfTitle,
+            'session_info' => $sessionInfo,
+            'course_info' => '',
+            'pdf_date' => '',
+            'student_info' => $studentInfo,
+            'show_grade_generated_date' => true,
+            'show_real_course_teachers' => false,
+            'show_teacher_as_myself' => false,
+            'orientation' => 'P',
+        ];
+        @$pdf = new PDF('A4', $params['orientation'], $params);
+        $pdf->setBackground($tpl->theme);
+        $mode = 'D';
+        $pdfName = $sessionInfo['name'].'_'.$studentInfo['complete_name'];
+        $pdf->set_footer();
+        $result = @$pdf->content_to_pdf(
+            $content,
+            '',
+            $pdfName,
+            null,
+            $mode,
+            false,
+            null,
+            false,
+            true,
+            false
+        );
         break;
     default:
         break;
@@ -957,8 +1044,31 @@ echo MyStudents::getBlockForSkills(
     $courseInfo ? $courseInfo['real_id'] : 0,
     $sessionId
 );
-
 echo '<br /><br />';
+
+$installed = AppPlugin::getInstance()->isInstalled('studentfollowup');
+
+if ($installed) {
+    echo Display::page_subheader(get_lang('Guidance'));
+    echo '
+       <script>
+        resizeIframe = function(iFrame) {
+            iFrame.height = iFrame.contentWindow.document.body.scrollHeight + 20;
+        }
+        </script>
+    ';
+    $url = api_get_path(WEB_PLUGIN_PATH).'studentfollowup/posts.php?iframe=1&student_id='.$student_id;
+    echo '<iframe
+        onload="resizeIframe(this)"
+        style="width:100%;"
+        border="0"
+        frameborder="0"
+        scrolling="no"
+        src="'.$url.'"
+    ></iframe>';
+    echo '<br /><br />';
+}
+
 echo '<div class="row"><div class="col-sm-5">';
 echo MyStudents::getBlockForClasses($student_id);
 echo '</div></div>';
@@ -990,7 +1100,7 @@ if (empty($details)) {
 
         $session_info = api_get_session_info($sId);
         if ($session_info) {
-            $session_name = $session_info['name'];
+            $session_name = Security::remove_XSS($session_info['name']);
             if (!empty($session_info['access_start_date'])) {
                 $access_start_date = api_format_date($session_info['access_start_date'], DATE_FORMAT_SHORT);
             }
@@ -1261,13 +1371,30 @@ if (empty($details)) {
                 );
                 $sessionAction .= Display::url(
                     Display::return_icon('pdf.png', get_lang('CertificateOfAchievement'), [], ICON_SIZE_MEDIUM),
-                    api_get_path(WEB_CODE_PATH).'mySpace/session.php?'
+                    api_get_path(WEB_AJAX_PATH).'myspace.ajax.php?'
                     .http_build_query(
                         [
+                            'a' => 'show_conditional_to_export_pdf',
                             'student' => $student_id,
-                            'action' => 'export_to_pdf',
-                            'type' => 'achievement',
                             'session_to_export' => $sId,
+                            'type' => 'achievement',
+                        ]
+                    ),
+                    [
+                        'class' => "ajax",
+                        'data-size' => 'sm',
+                        'data-title' => get_lang('CertificateOfAchievement'),
+                    ]
+                );
+                $sessionAction .= Display::url(
+                    Display::return_icon('pdf.png', get_lang('TestResult'), [], ICON_SIZE_MEDIUM),
+                    api_get_path(WEB_CODE_PATH).'mySpace/myStudents.php?'
+                    .http_build_query(
+                        [
+                            'action' => 'lp_stats_to_export_pdf',
+                            'student' => $student_id,
+                            'id_session' => $sId,
+                            'course' => $courseInfoItem['code'],
                         ]
                     )
                 );
@@ -1714,7 +1841,7 @@ if (empty($details)) {
             'quiz.session_id'
         );
 
-        $sql = "SELECT quiz.title, id
+        $sql = "SELECT quiz.title, iid
                 FROM $t_quiz AS quiz
                 WHERE
                     quiz.c_id = ".$courseInfo['real_id']." AND
@@ -1725,7 +1852,7 @@ if (empty($details)) {
         $i = 0;
         if (Database::num_rows($result_exercices) > 0) {
             while ($exercices = Database::fetch_array($result_exercices)) {
-                $exercise_id = (int) $exercices['id'];
+                $exercise_id = (int) $exercices['iid'];
                 $count_attempts = Tracking::count_student_exercise_attempts(
                     $student_id,
                     $courseInfo['real_id'],
@@ -2057,8 +2184,28 @@ if ($allowMessages === true) {
     $form->display();
 }
 
+$coachAccessStartDate = null;
+$coachAccessEndDate = null;
+
+if (!empty($sessionId)) {
+    $filterMessages = api_get_configuration_value('filter_interactivity_messages');
+
+    if ($filterMessages) {
+        $sessionInfo = api_get_session_info($sessionId);
+        if (!empty($sessionInfo)) {
+            $coachAccessStartDate = $sessionInfo['coach_access_start_date'];
+            $coachAccessEndDate = $sessionInfo['coach_access_end_date'];
+        }
+    }
+}
+
 $allow = api_get_configuration_value('allow_user_message_tracking');
 if ($allow && (api_is_drh() || api_is_platform_admin())) {
+    if ($filterMessages) {
+        $users = MessageManager::getUsersThatHadConversationWithUser($student_id, $coachAccessStartDate, $coachAccessEndDate);
+    } else {
+        $users = MessageManager::getUsersThatHadConversationWithUser($student_id);
+    }
     $users = MessageManager::getUsersThatHadConversationWithUser($student_id);
     echo Display::page_subheader2(get_lang('MessageTracking'));
 
@@ -2076,7 +2223,13 @@ if ($allow && (api_is_drh() || api_is_platform_admin())) {
     $row++;
     foreach ($users as $userFollowed) {
         $followedUserId = $userFollowed['user_id'];
-        $url = api_get_path(WEB_CODE_PATH).'tracking/messages.php?from_user='.$student_id.'&to_user='.$followedUserId;
+
+        if ($filterMessages) {
+            $url = api_get_path(WEB_CODE_PATH).'tracking/messages.php?from_user='.$student_id.'&to_user='.$followedUserId.'&start_date='.$coachAccessStartDate.'&end_date='.$coachAccessEndDate;
+        } else {
+            $url = api_get_path(WEB_CODE_PATH).'tracking/messages.php?from_user='.$student_id.'&to_user='.$followedUserId;
+        }
+
         $link = Display::url(
             $userFollowed['complete_name'],
             $url

@@ -961,7 +961,7 @@ class GradebookUtils
                             $select_gradebook->addOption(get_lang('Default'), $my_cat->get_id());
                             $cats_added[] = $my_cat->get_id();
                         } else {
-                            $select_gradebook->addOption($my_cat->get_name(), $my_cat->get_id());
+                            $select_gradebook->addOption(Security::remove_XSS($my_cat->get_name()), $my_cat->get_id());
                             $cats_added[] = $my_cat->get_id();
                         }
                     } else {
@@ -1732,6 +1732,8 @@ class GradebookUtils
         $imgSrcLoading = api_get_path(WEB_LIBRARY_JS_PATH).'loading.gif';
         $imgSrcPdf = Display::return_icon('pdf.png', '', [], ICON_SIZE_MEDIUM, false, true);
 
+        $urlDownload = api_get_path(WEB_CODE_PATH).'gradebook/gradebook_display_certificate.php?'.api_get_cidreq().'&action=download_all_certificates&catId='.$categoryId;
+
         return "<script>
             $(function () {
                 var \$btnExport = $('$buttonSelector'),
@@ -1742,7 +1744,7 @@ class GradebookUtils
                         \$btnExport.find('img').prop('src', '$imgSrcPdf');
                         window.clearInterval(interval);
                         window.removeEventListener('beforeunload', onbeforeunloadListener);
-                        window.location.href = response;
+                        window.location.href = '".$urlDownload."';
                     }
                 }
 

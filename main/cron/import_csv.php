@@ -1,4 +1,5 @@
 <?php
+
 /* For licensing terms, see /license.txt */
 
 use Chamilo\CourseBundle\Entity\CCalendarEvent;
@@ -160,6 +161,14 @@ class ImportCsv
                         $method = 'importCareersResults';
                     }
 
+                    if ($method == 'importCareersresultsremoveStatic') {
+                        $method = 'importCareersResultsRemoveStatic';
+                    }
+
+                    if ($method == 'importOpensessions') {
+                        $method = 'importOpenSessions';
+                    }
+
                     if ($method == 'importOpensessions') {
                         $method = 'importOpenSessions';
                     }
@@ -217,9 +226,10 @@ class ImportCsv
                 'courseinsert-static',
                 'unsubscribe-static',
                 'care',
-                'careers',
-                'careersdiagram',
-                'careersresults',
+                'skillset',
+                //'careers',
+                //'careersdiagram',
+                //'careersresults',
             ];
 
             foreach ($sections as $section) {
@@ -261,6 +271,7 @@ class ImportCsv
                 'unsubsessionsextid-static',
                 'subsessionsextid-static',
                 'calendar-static',
+                //'careersresultsremove-static',
             ];
 
             foreach ($sections as $section) {
@@ -288,8 +299,57 @@ class ImportCsv
                     }
                 }
             }
+
             $this->logger->addInfo('teacher backup');
             $this->logger->addInfo(print_r($teacherBackup, 1));
+
+            // Careers at the end:
+            $sections = [
+                'careers',
+                'careersdiagram',
+                'careersresults',
+            ];
+
+            foreach ($sections as $section) {
+                if (isset($fileToProcess[$section]) && !empty($fileToProcess[$section])) {
+                    $this->logger->addInfo("-- Import $section --");
+                    $files = $fileToProcess[$section];
+                    foreach ($files as $fileInfo) {
+                        $method = $fileInfo['method'];
+                        $file = $fileInfo['file'];
+                        echo 'File: '.$file.PHP_EOL;
+                        echo 'Method : '.$method.PHP_EOL;
+                        echo PHP_EOL;
+
+                        $this->logger->addInfo('====================================================');
+                        $this->logger->addInfo("Reading file: $file");
+                        $this->logger->addInfo("Loading method $method ");
+                        $this->$method($file, true);
+                        $this->logger->addInfo('--Finish reading file--');
+                    }
+                }
+            }
+
+            $removeResults = 'careersresultsremove-static';
+            if (isset($fileToProcessStatic[$removeResults]) &&
+                !empty($fileToProcessStatic[$removeResults])
+            ) {
+                $files = $fileToProcessStatic[$removeResults];
+                foreach ($files as $fileInfo) {
+                    $method = $fileInfo['method'];
+                    $file = $fileInfo['file'];
+                    echo 'Static file: '.$file.PHP_EOL;
+                    echo 'Method : '.$method.PHP_EOL;
+                    echo PHP_EOL;
+                    $this->logger->addInfo("Reading static file: $file");
+                    $this->logger->addInfo("Loading method $method ");
+                    $this->$method(
+                        $file,
+                        true
+                    );
+                    $this->logger->addInfo('--Finish reading file--');
+                }
+            }
         }
     }
 
@@ -466,6 +526,14 @@ class ImportCsv
             $this->extraFieldIdNameList['course'],
             1,
             'External course id',
+            ''
+        );
+
+        // Course skill set.
+        CourseManager::create_course_extra_field(
+            'skillset',
+            1,
+            'Skill set',
             ''
         );
 
@@ -743,6 +811,15 @@ class ImportCsv
                         0 //$reset_password = 0
                     );
 
+                    $table = Database::get_main_table(TABLE_MAIN_USER);
+                    $authSource = Database::escape_string($row['auth_source']);
+                    $sql = "UPDATE $table SET auth_source = '$authSource' WHERE id = ".$userInfo['user_id'];
+                    Database::query($sql);
+
+                    $this->logger->addInfo(
+                        'Teachers - #'.$userInfo['user_id']." auth_source was changed from '".$userInfo['auth_source']."' to '".$row['auth_source']."' "
+                    );
+
                     if ($result) {
                         foreach ($row as $key => $value) {
                             if (substr($key, 0, 6) == 'extra_') {
@@ -1007,6 +1084,15 @@ class ImportCsv
                         null, //$encrypt_method = '',
                         false, //$send_email = false,
                         $resetPassword //$reset_password = 0
+                    );
+
+                    $table = Database::get_main_table(TABLE_MAIN_USER);
+                    $authSource = Database::escape_string($row['auth_source']);
+                    $sql = "UPDATE $table SET auth_source = '$authSource' WHERE id = ".$userInfo['user_id'];
+                    Database::query($sql);
+
+                    $this->logger->addInfo(
+                        "Students - #".$userInfo['user_id']." auth_source was changed from '".$userInfo['auth_source']."' to '".$row['auth_source']."' "
                     );
 
                     if ($result) {
@@ -1727,6 +1813,81 @@ class ImportCsv
         }
     }
 
+    private function importSkillset(
+        $file,
+        $moveFile = true
+    ) {
+        $this->fixCSVFile($file);
+        $data = Import::csvToArray($file);
+        if (!empty($data)) {
+            $this->logger->addInfo(count($data).' records found.');
+            $extraFieldValues = new ExtraFieldValue('skill');
+            $em = Database::getManager();
+            $repo = $em->getRepository(\Chamilo\CoreBundle\Entity\Skill::class);
+            $skillSetList = [];
+            $urlId = api_get_current_access_url_id();
+
+            foreach ($data as $row) {
+                $skill = $repo->findOneBy(['shortCode' => $row['Code']]);
+                $new = false;
+                if ($skill === null) {
+                    $new = true;
+                    $skill = new \Chamilo\CoreBundle\Entity\Skill();
+                    $skill
+                        ->setShortCode($row['Code'])
+                        ->setDescription('')
+                        ->setAccessUrlId($urlId)
+                        ->setIcon('')
+                        ->setStatus(1)
+                    ;
+                }
+
+                $skill
+                    ->setName($row['Tekst'])
+                    ->setUpdatedAt(new DateTime())
+                ;
+                $em->persist($skill);
+                $em->flush();
+
+                if ($new) {
+                    $skillRelSkill = (new \Chamilo\CoreBundle\Entity\SkillRelSkill())
+                        ->setRelationType(0)
+                        ->setParentId(0)
+                        ->setLevel(0)
+                        ->setSkillId($skill->getId())
+                    ;
+                    $em->persist($skillRelSkill);
+                    $em->flush();
+                }
+
+                /*
+                $params = [
+                    'item_id' => $skill->getId(),
+                    'variable' => 'skillset',
+                    'value' => $row['SkillsetID'],
+                ];
+                $extraFieldValues->save($params);*/
+                $skillSetList[$row['SkillsetID']][] = $skill->getId();
+            }
+
+            //$courseRelSkills = [];
+            foreach ($skillSetList as $skillSetId => $skillList) {
+                $skillList = array_unique($skillList);
+                if (empty($skillList)) {
+                    continue;
+                }
+
+                $sql = "SELECT id FROM course WHERE code LIKE '%$skillSetId' ";
+                $result = Database::query($sql);
+                while ($row = Database::fetch_array($result, 'ASSOC')) {
+                    $courseId = $row['id'];
+                    //$courseRelSkills[$courseId] = $skillList;
+                    Skill::saveSkillsToCourse($skillList, $courseId, null);
+                }
+            }
+        }
+    }
+
     /**
      * @param string $file
      * @param bool   $moveFile
@@ -1747,7 +1908,6 @@ class ImportCsv
 
             foreach ($data as $row) {
                 $row = $this->cleanCourseRow($row);
-
                 $courseId = CourseManager::get_course_id_from_original_id(
                     $row['extra_'.$this->extraFieldIdNameList['course']],
                     $this->extraFieldIdNameList['course']
@@ -1776,6 +1936,12 @@ class ImportCsv
                             $courseInfo['code'],
                             'external_course_id',
                             $row['extra_'.$this->extraFieldIdNameList['course']]
+                        );
+
+                        CourseManager::update_course_extra_field_value(
+                            $courseInfo['code'],
+                            'skillset',
+                            $row['extra_courseskillset']
                         );
 
                         $this->logger->addInfo("Courses - Course created ".$courseInfo['code']);
@@ -1824,6 +1990,12 @@ class ImportCsv
                             $this->logger
                         );
                     }
+
+                    CourseManager::update_course_extra_field_value(
+                        $courseInfo['code'],
+                        'skillset',
+                        $row['extra_courseskillset']
+                    );
 
                     foreach ($teachers as $teacherId) {
                         if (isset($groupBackup['tutor'][$teacherId]) &&
@@ -2779,6 +2951,113 @@ class ImportCsv
                 }
             }
         }
+
+        if ($moveFile) {
+            $this->moveFile($file);
+        }
+    }
+
+    /**
+     * @param $file
+     * @param bool  $moveFile
+     * @param array $teacherBackup
+     * @param array $groupBackup
+     */
+    private function importCareersResultsRemoveStatic(
+        $file,
+        $moveFile = false
+    ) {
+        $data = Import::csv_reader($file);
+
+        $careerIdList = [];
+        $userIdList = [];
+
+        if (!empty($data)) {
+            $totalCount = count($data);
+            $this->logger->addInfo($totalCount.' records found.');
+
+            $extraFieldValue = new ExtraFieldValue('career');
+            $extraFieldName = $this->extraFieldIdNameList['career'];
+            $rowCounter = 0;
+            foreach ($data as $row) {
+                $this->logger->addInfo("---------- Row: # $rowCounter");
+                $rowCounter++;
+                if (empty($row)) {
+                    continue;
+                }
+
+                foreach ($row as $key => $value) {
+                    $key = (string) trim($key);
+                    // Remove utf8 bom
+                    $key = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $key);
+                    $row[$key] = $value;
+                }
+
+                $rowStudentId = $row['StudentId'];
+
+                if (isset($userIdList[$rowStudentId])) {
+                    $studentId = $userIdList[$rowStudentId];
+                } else {
+                    $studentId = UserManager::get_user_id_from_original_id(
+                        $rowStudentId,
+                        $this->extraFieldIdNameList['user']
+                    );
+                    $userIdList[$rowStudentId] = $studentId;
+                }
+
+                $careerId = $row['CareerId'];
+                if (isset($careerIdList[$careerId])) {
+                    $careerChamiloId = $careerIdList[$careerId];
+                } else {
+                    $item = $extraFieldValue->get_item_id_from_field_variable_and_field_value(
+                        $extraFieldName,
+                        $careerId
+                    );
+
+                    if (empty($item)) {
+                        $careerIdList[$careerId] = 0;
+                        continue;
+                    } else {
+                        if (isset($item['item_id'])) {
+                            $careerChamiloId = $item['item_id'];
+                            $careerIdList[$careerId] = $careerChamiloId;
+                        } else {
+                            $careerIdList[$careerId] = 0;
+                            continue;
+                        }
+                    }
+                }
+
+                if (empty($careerChamiloId)) {
+                    $this->logger->addInfo("Career not found: $careerId ");
+                    continue;
+                }
+
+                $userCareerData = UserManager::getUserCareer($studentId, $careerChamiloId);
+
+                if (empty($userCareerData)) {
+                    $this->logger->addInfo(
+                        "User chamilo id # $studentId (".$row['StudentId'].") has no career #$careerChamiloId (ext #$careerId)"
+                    );
+                    continue;
+                }
+
+                $extraData = isset($userCareerData['extra_data']) && !empty($userCareerData['extra_data']) ? unserialize($userCareerData['extra_data']) : [];
+                unset($extraData[$row['CourseId']][$row['ResultId']]);
+                $serializedValue = serialize($extraData);
+
+                UserManager::updateUserCareer($userCareerData['id'], $serializedValue);
+
+                $this->logger->addInfo('Deleting: result id'.$row['ResultId']);
+                $this->logger->addInfo(
+                    "Saving graph for user chamilo # $studentId (".$row['StudentId'].") with career #$careerChamiloId (ext #$careerId)"
+                );
+            }
+        }
+
+        if ($moveFile) {
+            $this->moveFile($file);
+        }
     }
 
     /**
@@ -2832,18 +3111,7 @@ class ImportCsv
                     $userIdList[$rowStudentId] = $studentId;
                 }
 
-                //$studentInfo = api_get_user_info($studentId);
-
-                /*$sql = "SELECT id FROM $userTable WHERE id = $studentId";
-                $result = Database::query($sql);
-                if (empty(Database::num_rows($result))) {
-                    $this->logger->addInfo("Student chamilo id not found: $studentId row data StudentId: ".$row['StudentId']);
-                    continue;
-                }*/
-
                 $careerId = $row['CareerId'];
-
-                //$careerChamiloId = 0;
                 if (isset($careerIdList[$careerId])) {
                     $careerChamiloId = $careerIdList[$careerId];
                 } else {
@@ -2884,7 +3152,6 @@ class ImportCsv
 
                 $extraData = isset($userCareerData['extra_data']) && !empty($userCareerData['extra_data']) ? unserialize($userCareerData['extra_data']) : [];
 
-                //$teacherInfo = api_get_user_info_from_username($row['TeacherUsername']);
                 $sql = "SELECT firstname, lastname FROM $userTable
                         WHERE username='".Database::escape_string($row['TeacherUsername'])."'";
                 $result = Database::query($sql);
@@ -2908,6 +3175,7 @@ class ImportCsv
                     'BorderColor' => $row['BorderColor'],
                     'Icon' => $row['Icon'],
                     'IconColor' => $row['IconColor'],
+                    'SortDate' => $row['SortDate'] ?? '',
                 ];
                 $serializedValue = serialize($extraData);
 
@@ -2917,6 +3185,10 @@ class ImportCsv
                     "Saving graph for user chamilo # $studentId (".$row['StudentId'].") with career #$careerChamiloId (ext #$careerId)"
                 );
             }
+        }
+
+        if ($moveFile) {
+            $this->moveFile($file);
         }
     }
 
@@ -2936,7 +3208,6 @@ class ImportCsv
 
         $extraFieldValue = new ExtraFieldValue('career');
         $extraFieldName = $this->extraFieldIdNameList['career'];
-        $externalEventId = null;
 
         $extraField = new ExtraField('career');
         $extraFieldInfo = $extraField->get_handler_field_info_by_field_variable($extraFieldName);
@@ -3090,6 +3361,10 @@ class ImportCsv
                     $extraFieldValue->saveFieldValues($params, true);
                 }
             }
+        }
+
+        if ($moveFile) {
+            $this->moveFile($file);
         }
     }
 

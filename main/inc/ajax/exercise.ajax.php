@@ -10,6 +10,9 @@ use ChamiloSession as Session;
 require_once __DIR__.'/../global.inc.php';
 $current_course_tool = TOOL_QUIZ;
 $debug = false;
+
+ExerciseLib::logPingForCheckingConnection();
+
 // Check if the user has access to the contextual course/session
 api_protect_course_script(true);
 
@@ -35,7 +38,7 @@ switch ($action) {
 
         if (!empty($results)) {
             foreach ($results as $exercise) {
-                $data[] = ['id' => $exercise['id'], 'text' => html_entity_decode($exercise['title'])];
+                $data[] = ['id' => $exercise['iid'], 'text' => html_entity_decode($exercise['title'])];
             }
         }
 
@@ -92,7 +95,7 @@ switch ($action) {
             exit;
         }
 
-        if ($exerciseInSession->id != $exerciseId) {
+        if ($exerciseInSession->iid != $exerciseId) {
             if ($debug) {
                 error_log("Cannot update, exercise are different.");
             }
@@ -166,6 +169,10 @@ switch ($action) {
         $limit = (int) $_REQUEST['rows']; //quantity of rows
         $sidx = $_REQUEST['sidx']; //index to filter
         $sord = $_REQUEST['sord']; //asc or desc
+
+        if (!in_array($sidx, ['firstname', 'lastname', 'start_date'])) {
+            $sidx = 1;
+        }
 
         if (!in_array($sord, ['asc', 'desc'])) {
             $sord = 'desc';
@@ -242,7 +249,7 @@ switch ($action) {
                     GROUP BY exe_user_id
                 ) as aa
                 ON aa.exe_user_id = user_id
-                ORDER BY `$sidx` $sord
+                ORDER BY $sidx $sord
                 LIMIT $start, $limit";
 
         $result = Database::query($sql);
@@ -460,6 +467,12 @@ switch ($action) {
         header('Content-Type: application/json');
 
         $course_info = api_get_course_info_by_id($course_id);
+
+        if (empty($course_info)) {
+            echo json_encode(['error' => true]);
+            exit;
+        }
+
         $course_id = $course_info['real_id'];
 
         // Use have permissions to edit exercises results now?
@@ -487,6 +500,9 @@ switch ($action) {
         // Hot spot coordinates from all questions.
         $hot_spot_coordinates = isset($_REQUEST['hotspot']) ? $_REQUEST['hotspot'] : [];
 
+        // the filenames in upload answer type
+        $uploadAnswerFileNames = isset($_REQUEST['uploadChoice']) ? $_REQUEST['uploadChoice'] : [];
+
         // There is a reminder?
         $remind_list = isset($_REQUEST['remind_list']) && !empty($_REQUEST['remind_list'])
             ? array_keys($_REQUEST['remind_list']) : [];
@@ -501,6 +517,7 @@ switch ($action) {
             error_log("choice = ".print_r($choice, 1)." ");
             error_log("hot_spot_coordinates = ".print_r($hot_spot_coordinates, 1));
             error_log("remind_list = ".print_r($remind_list, 1));
+            error_log("uploadAnswerFileNames = ".print_r($uploadAnswerFileNames, 1));
             error_log("--------------------------------");
         }
 
@@ -528,11 +545,11 @@ switch ($action) {
         if (WhispeakAuthPlugin::questionRequireAuthentify($question_id)) {
             if ($objExercise->type == ONE_PER_PAGE) {
                 echo json_encode(['type' => 'one_per_page']);
-                break;
+                exit;
             }
 
             echo json_encode(['ok' => true]);
-            break;
+            exit;
         } else {
             ChamiloSession::erase(WhispeakAuthPlugin::SESSION_QUIZ_QUESTION);
         }
@@ -614,7 +631,7 @@ switch ($action) {
                 // Check if time is over.
                 if ($objExercise->expired_time != 0) {
                     $clockExpiredTime = ExerciseLib::get_session_time_control_key(
-                        $objExercise->id,
+                        $objExercise->iid,
                         $learnpath_id,
                         $learnpath_item_id
                     );
@@ -653,7 +670,20 @@ switch ($action) {
                     $myChoiceDegreeCertainty = $choiceDegreeCertainty[$my_question_id];
                 }
             }
-
+            if ($objQuestionTmp->type === UPLOAD_ANSWER) {
+                $my_choice = '';
+                if (!empty($uploadAnswerFileNames)) {
+                    // Clean user upload_answer folder
+                    $userUploadAnswerSyspath = UserManager::getUserPathById(api_get_user_id(), 'system').'my_files'.'/upload_answer/'.$exeId.'/'.$my_question_id.'/*';
+                    foreach (glob($userUploadAnswerSyspath) as $file) {
+                        $filename = basename($file);
+                        if (!in_array($filename, $uploadAnswerFileNames[$my_question_id])) {
+                            unlink($file);
+                        }
+                    }
+                    $my_choice = implode('|', $uploadAnswerFileNames[$my_question_id]);
+                }
+            }
             // Getting free choice data.
             if ('all' === $type && in_array($objQuestionTmp->type, [FREE_ANSWER, ORAL_EXPRESSION])) {
                 $my_choice = isset($_REQUEST['free_choice'][$my_question_id]) && !empty($_REQUEST['free_choice'][$my_question_id])
@@ -848,7 +878,7 @@ switch ($action) {
                     [
                         'exe_id' => (int) $exeId,
                         'quiz' => [
-                            'id' => (int) $objExercise->id,
+                            'id' => (int) $objExercise->iid,
                             'title' => $objExercise->selectTitle(true),
                         ],
                         'question' => [
@@ -1071,6 +1101,60 @@ switch ($action) {
             }
         }
         echo 0;
+        break;
+    case 'upload_answer':
+        api_block_anonymous_users();
+        if (!empty($_FILES)) {
+            $currentDirectory = Security::remove_XSS($_REQUEST['curdirpath']);
+            $userId = api_get_user_id();
+
+            // Upload answer path is created inside user personal folder my_files/upload_answer/[exe_id]/[question_id]
+            $syspath = UserManager::getUserPathById($userId, 'system').'my_files'.$currentDirectory;
+            @mkdir($syspath, api_get_permissions_for_new_directories(), true);
+            $webpath = UserManager::getUserPathById($userId, 'web').'my_files'.$currentDirectory;
+
+            $files = $_FILES['files'];
+            $fileList = [];
+            foreach ($files as $name => $array) {
+                $counter = 0;
+                foreach ($array as $data) {
+                    $fileList[$counter][$name] = $data;
+                    $counter++;
+                }
+            }
+            $resultList = [];
+            foreach ($fileList as $file) {
+                $json = [];
+
+                $filename = api_replace_dangerous_char($file['name']);
+                $filename = disable_dangerous_file($filename);
+
+                if (move_uploaded_file($file['tmp_name'], $syspath.$filename)) {
+                    $title = $filename;
+                    $url = $webpath.$filename;
+                    $json['name'] = api_htmlentities($title);
+                    $json['link'] = Display::url(
+                        api_htmlentities($title),
+                        api_htmlentities($url),
+                        ['target' => '_blank']
+                    );
+                    $json['url'] = $url;
+                    $json['size'] = format_file_size($file['size']);
+                    $json['type'] = api_htmlentities($file['type']);
+                    $json['result'] = Display::return_icon(
+                        'accept.png',
+                        get_lang('Uploaded')
+                    );
+                } else {
+                    $json['name'] = isset($file['name']) ? $filename : get_lang('Unknown');
+                    $json['url'] = '';
+                    $json['error'] = get_lang('Error');
+                }
+                $resultList[] = $json;
+            }
+            echo json_encode(['files' => $resultList]);
+            exit;
+        }
         break;
     default:
         echo '';
